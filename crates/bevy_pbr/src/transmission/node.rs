@@ -114,6 +114,17 @@ pub fn main_transmissive_pass_3d(
 
             pass_span.end(&mut render_pass);
         }
+    } else if transmission_settings.steps > 0
+        && let Some(transmission) = transmission
+    {
+        // Initialize `ViewTransmissionTexture` before the transparent pass.
+        // Transparent materials can read it even when there are no
+        // `Transmissive3d` items in the view.
+        ctx.command_encoder().copy_texture_to_texture(
+            target.main_texture().as_image_copy(),
+            transmission.texture.as_image_copy(),
+            physical_target_size.to_extents(),
+        );
     }
 }
 
