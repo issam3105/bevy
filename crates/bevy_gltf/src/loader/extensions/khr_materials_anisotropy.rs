@@ -1,5 +1,7 @@
 use bevy_asset::{AssetPath, Handle};
 use bevy_image::Image;
+#[cfg(feature = "pbr_anisotropy_texture")]
+use bevy_math::Affine2;
 
 use gltf::Material;
 
@@ -12,7 +14,6 @@ use {crate::loader::gltf_ext::material::parse_material_extension_texture, bevy_m
 ///
 /// See the specification:
 /// <https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_anisotropy/README.md>
-#[derive(Default)]
 pub(crate) struct AnisotropyExtension {
     pub(crate) anisotropy_strength: Option<f64>,
     pub(crate) anisotropy_rotation: Option<f64>,
@@ -20,6 +21,23 @@ pub(crate) struct AnisotropyExtension {
     pub(crate) anisotropy_channel: UvChannel,
     #[cfg(feature = "pbr_anisotropy_texture")]
     pub(crate) anisotropy_texture: Option<Handle<Image>>,
+    #[cfg(feature = "pbr_anisotropy_texture")]
+    pub(crate) anisotropy_texture_transform: Affine2,
+}
+
+impl Default for AnisotropyExtension {
+    fn default() -> Self {
+        Self {
+            anisotropy_strength: None,
+            anisotropy_rotation: None,
+            #[cfg(feature = "pbr_anisotropy_texture")]
+            anisotropy_channel: UvChannel::Uv0,
+            #[cfg(feature = "pbr_anisotropy_texture")]
+            anisotropy_texture: None,
+            #[cfg(feature = "pbr_anisotropy_texture")]
+            anisotropy_texture_transform: Affine2::IDENTITY,
+        }
+    }
 }
 
 impl AnisotropyExtension {
@@ -42,14 +60,15 @@ impl AnisotropyExtension {
             .as_object()?;
 
         #[cfg(feature = "pbr_anisotropy_texture")]
-        let (anisotropy_channel, anisotropy_texture) = parse_material_extension_texture(
-            material,
-            extension,
-            "anisotropyTexture",
-            "anisotropy",
-            textures,
-            asset_path,
-        );
+        let (anisotropy_channel, anisotropy_texture, anisotropy_texture_transform) =
+            parse_material_extension_texture(
+                material,
+                extension,
+                "anisotropyTexture",
+                "anisotropy",
+                textures,
+                asset_path,
+            );
 
         Some(AnisotropyExtension {
             anisotropy_strength: extension.get("anisotropyStrength").and_then(Value::as_f64),
@@ -58,6 +77,8 @@ impl AnisotropyExtension {
             anisotropy_channel,
             #[cfg(feature = "pbr_anisotropy_texture")]
             anisotropy_texture,
+            #[cfg(feature = "pbr_anisotropy_texture")]
+            anisotropy_texture_transform,
         })
     }
 }

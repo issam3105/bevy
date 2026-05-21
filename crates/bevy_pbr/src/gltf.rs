@@ -35,13 +35,16 @@ pub fn standard_material_from_gltf_material(material: &GltfMaterial) -> Standard
         base_color: material.base_color,
         base_color_channel: material.base_color_channel.clone(),
         base_color_texture: material.base_color_texture.clone(),
+        base_color_texture_transform: material.base_color_texture_transform,
         emissive: material.emissive,
         emissive_channel: material.emissive_channel.clone(),
         emissive_texture: material.emissive_texture.clone(),
+        emissive_texture_transform: material.emissive_texture_transform,
         perceptual_roughness: material.perceptual_roughness,
         metallic: material.metallic,
         metallic_roughness_channel: material.metallic_roughness_channel.clone(),
         metallic_roughness_texture: material.metallic_roughness_texture.clone(),
+        metallic_roughness_texture_transform: material.metallic_roughness_texture_transform,
         reflectance: material.reflectance,
         specular_tint: material.specular_tint,
         specular_transmission: material.specular_transmission,
@@ -49,42 +52,64 @@ pub fn standard_material_from_gltf_material(material: &GltfMaterial) -> Standard
         specular_transmission_channel: material.specular_transmission_channel.clone(),
         #[cfg(feature = "pbr_transmission_textures")]
         specular_transmission_texture: material.specular_transmission_texture.clone(),
+        #[cfg(feature = "pbr_transmission_textures")]
+        specular_transmission_texture_transform: material.specular_transmission_texture_transform,
         thickness: material.thickness,
         #[cfg(feature = "pbr_transmission_textures")]
         thickness_channel: material.thickness_channel.clone(),
         #[cfg(feature = "pbr_transmission_textures")]
         thickness_texture: material.thickness_texture.clone(),
+        #[cfg(feature = "pbr_transmission_textures")]
+        thickness_texture_transform: material.thickness_texture_transform,
         ior: material.ior,
         attenuation_distance: material.attenuation_distance,
         attenuation_color: material.attenuation_color,
         normal_map_channel: material.normal_map_channel.clone(),
         normal_map_texture: material.normal_map_texture.clone(),
+        normal_map_texture_transform: material.normal_map_texture_transform,
         occlusion_channel: material.occlusion_channel.clone(),
         occlusion_texture: material.occlusion_texture.clone(),
+        occlusion_texture_transform: material.occlusion_texture_transform,
         #[cfg(feature = "pbr_specular_textures")]
         specular_channel: material.specular_channel.clone(),
         #[cfg(feature = "pbr_specular_textures")]
         specular_texture: material.specular_texture.clone(),
         #[cfg(feature = "pbr_specular_textures")]
+        specular_texture_transform: material.specular_texture_transform,
+        #[cfg(feature = "pbr_specular_textures")]
         specular_tint_channel: material.specular_tint_channel.clone(),
         #[cfg(feature = "pbr_specular_textures")]
         specular_tint_texture: material.specular_tint_texture.clone(),
+        #[cfg(feature = "pbr_specular_textures")]
+        specular_tint_texture_transform: material.specular_tint_texture_transform,
         clearcoat: material.clearcoat,
         clearcoat_perceptual_roughness: material.clearcoat_perceptual_roughness,
+        #[cfg(feature = "pbr_multi_layer_material_textures")]
+        clearcoat_channel: material.clearcoat_channel.clone(),
+        #[cfg(feature = "pbr_multi_layer_material_textures")]
+        clearcoat_texture: material.clearcoat_texture.clone(),
+        #[cfg(feature = "pbr_multi_layer_material_textures")]
+        clearcoat_texture_transform: material.clearcoat_texture_transform,
         #[cfg(feature = "pbr_multi_layer_material_textures")]
         clearcoat_roughness_channel: material.clearcoat_roughness_channel.clone(),
         #[cfg(feature = "pbr_multi_layer_material_textures")]
         clearcoat_roughness_texture: material.clearcoat_roughness_texture.clone(),
         #[cfg(feature = "pbr_multi_layer_material_textures")]
+        clearcoat_roughness_texture_transform: material.clearcoat_roughness_texture_transform,
+        #[cfg(feature = "pbr_multi_layer_material_textures")]
         clearcoat_normal_channel: material.clearcoat_normal_channel.clone(),
         #[cfg(feature = "pbr_multi_layer_material_textures")]
         clearcoat_normal_texture: material.clearcoat_normal_texture.clone(),
+        #[cfg(feature = "pbr_multi_layer_material_textures")]
+        clearcoat_normal_texture_transform: material.clearcoat_normal_texture_transform,
         anisotropy_strength: material.anisotropy_strength,
         anisotropy_rotation: material.anisotropy_rotation,
         #[cfg(feature = "pbr_anisotropy_texture")]
         anisotropy_channel: material.anisotropy_channel.clone(),
         #[cfg(feature = "pbr_anisotropy_texture")]
         anisotropy_texture: material.anisotropy_texture.clone(),
+        #[cfg(feature = "pbr_anisotropy_texture")]
+        anisotropy_texture_transform: material.anisotropy_texture_transform,
         double_sided: material.double_sided,
         cull_mode: material.cull_mode,
         unlit: material.unlit,

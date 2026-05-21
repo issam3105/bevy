@@ -7,6 +7,28 @@ struct StandardMaterial {
     emissive: vec4<f32>,
     attenuation_color: vec4<f32>,
     uv_transform: mat3x3<f32>,
+    base_color_texture_transform: mat3x3<f32>,
+    emissive_texture_transform: mat3x3<f32>,
+    metallic_roughness_texture_transform: mat3x3<f32>,
+    normal_map_texture_transform: mat3x3<f32>,
+    occlusion_texture_transform: mat3x3<f32>,
+#ifdef PBR_TRANSMISSION_TEXTURES_SUPPORTED
+    diffuse_transmission_texture_transform: mat3x3<f32>,
+    specular_transmission_texture_transform: mat3x3<f32>,
+    thickness_texture_transform: mat3x3<f32>,
+#endif
+#ifdef PBR_SPECULAR_TEXTURES_SUPPORTED
+    specular_texture_transform: mat3x3<f32>,
+    specular_tint_texture_transform: mat3x3<f32>,
+#endif
+#ifdef PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED
+    clearcoat_texture_transform: mat3x3<f32>,
+    clearcoat_roughness_texture_transform: mat3x3<f32>,
+    clearcoat_normal_texture_transform: mat3x3<f32>,
+#endif
+#ifdef PBR_ANISOTROPY_TEXTURE_SUPPORTED
+    anisotropy_texture_transform: mat3x3<f32>,
+#endif
     reflectance: vec3<f32>,
     perceptual_roughness: f32,
     metallic: f32,
@@ -90,6 +112,28 @@ fn standard_material_new() -> StandardMaterial {
     material.deferred_lighting_pass_id = 1u;
     // scale 1, translation 0, rotation 0
     material.uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.base_color_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.emissive_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.metallic_roughness_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.normal_map_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.occlusion_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+#ifdef PBR_TRANSMISSION_TEXTURES_SUPPORTED
+    material.diffuse_transmission_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.specular_transmission_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.thickness_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+#endif
+#ifdef PBR_SPECULAR_TEXTURES_SUPPORTED
+    material.specular_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.specular_tint_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+#endif
+#ifdef PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED
+    material.clearcoat_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.clearcoat_roughness_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.clearcoat_normal_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+#endif
+#ifdef PBR_ANISOTROPY_TEXTURE_SUPPORTED
+    material.anisotropy_texture_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+#endif
 
     return material;
 }

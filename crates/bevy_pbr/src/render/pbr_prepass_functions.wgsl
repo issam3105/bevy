@@ -18,6 +18,10 @@
 // Cutoff used for the premultiplied alpha modes BLEND, ADD, and ALPHA_TO_COVERAGE.
 const PREMULTIPLIED_ALPHA_CUTOFF = 0.05;
 
+fn transform_uv(uv_transform: mat3x3<f32>, uv: vec2<f32>) -> vec2<f32> {
+    return (uv_transform * vec3(uv, 1.0)).xy;
+}
+
 // We can use a simplified version of alpha_discard() here since we only need to handle the alpha_cutoff
 fn prepass_alpha_discard(in: VertexOutput) {
 
@@ -40,8 +44,10 @@ fn prepass_alpha_discard(in: VertexOutput) {
 
 #ifdef BINDLESS
     let uv_transform = pbr_bindings::material_array[material_indices[slot].material].uv_transform;
+    let base_color_texture_transform = pbr_bindings::material_array[material_indices[slot].material].base_color_texture_transform;
 #else   // BINDLESS
     let uv_transform = pbr_bindings::material.uv_transform;
+    let base_color_texture_transform = pbr_bindings::material.base_color_texture_transform;
 #endif  // BINDLESS
 
     uv = (uv_transform * vec3(uv, 1.0)).xy;
@@ -54,7 +60,7 @@ fn prepass_alpha_discard(in: VertexOutput) {
             pbr_bindings::base_color_texture,
             pbr_bindings::base_color_sampler,
 #endif  // BINDLESS
-            uv,
+            transform_uv(base_color_texture_transform, uv),
             view.mip_bias
         );
     }

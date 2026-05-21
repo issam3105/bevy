@@ -21,6 +21,9 @@ pub struct GltfMaterial {
     /// The texture component of the material's color before lighting.
     pub base_color_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::base_color_texture`].
+    pub base_color_texture_transform: Affine2,
+
     /// Color the material "emits" to the camera.
     pub emissive: LinearRgba,
 
@@ -30,6 +33,9 @@ pub struct GltfMaterial {
     /// The emissive map, multiplies pixels with [`GltfMaterial::emissive`]
     /// to get the final "emitting" color of a surface.
     pub emissive_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::emissive_texture`].
+    pub emissive_texture_transform: Affine2,
 
     /// Linear perceptual roughness.
     pub perceptual_roughness: f32,
@@ -43,6 +49,9 @@ pub struct GltfMaterial {
     /// Metallic and roughness maps, stored as a single texture.
     pub metallic_roughness_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::metallic_roughness_texture`].
+    pub metallic_roughness_texture_transform: Affine2,
+
     /// Specular intensity for non-metals on a linear scale of `[0.0, 1.0]`.
     pub reflectance: f32,
 
@@ -53,6 +62,10 @@ pub struct GltfMaterial {
     /// A map that specifies reflectance for non-metallic materials.
     #[cfg(feature = "pbr_specular_textures")]
     pub specular_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::specular_texture`].
+    #[cfg(feature = "pbr_specular_textures")]
+    pub specular_texture_transform: Affine2,
 
     /// A color with which to modulate the [`GltfMaterial::reflectance`] for
     /// non-metals.
@@ -68,6 +81,10 @@ pub struct GltfMaterial {
     #[cfg(feature = "pbr_specular_textures")]
     pub specular_tint_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::specular_tint_texture`].
+    #[cfg(feature = "pbr_specular_textures")]
+    pub specular_tint_texture_transform: Affine2,
+
     /// The amount of light transmitted _specularly_ through the material (i.e. via refraction).
     pub specular_transmission: f32,
 
@@ -80,6 +97,10 @@ pub struct GltfMaterial {
     #[cfg(feature = "pbr_transmission_textures")]
     pub specular_transmission_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::specular_transmission_texture`].
+    #[cfg(feature = "pbr_transmission_textures")]
+    pub specular_transmission_texture_transform: Affine2,
+
     /// Thickness of the volume beneath the material surface.
     pub thickness: f32,
     #[cfg(feature = "pbr_transmission_textures")]
@@ -91,6 +112,10 @@ pub struct GltfMaterial {
     /// to obtain the final result.
     #[cfg(feature = "pbr_transmission_textures")]
     pub thickness_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::thickness_texture`].
+    #[cfg(feature = "pbr_transmission_textures")]
+    pub thickness_texture_transform: Affine2,
 
     /// The [index of refraction](https://en.wikipedia.org/wiki/Refractive_index) of the material.
     pub ior: f32,
@@ -108,11 +133,17 @@ pub struct GltfMaterial {
     /// Used to fake the lighting of bumps and dents on a material.
     pub normal_map_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::normal_map_texture`].
+    pub normal_map_texture_transform: Affine2,
+
     /// The UV channel to use for the [`GltfMaterial::occlusion_texture`].
     pub occlusion_channel: UvChannel,
 
     /// Specifies the level of exposure to ambient light.
     pub occlusion_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::occlusion_texture`].
+    pub occlusion_texture_transform: Affine2,
 
     /// An extra thin translucent layer on top of the main PBR layer. This is
     /// typically used for painted surfaces.
@@ -132,6 +163,10 @@ pub struct GltfMaterial {
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     pub clearcoat_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::clearcoat_texture`].
+    #[cfg(feature = "pbr_multi_layer_material_textures")]
+    pub clearcoat_texture_transform: Affine2,
+
     /// The UV channel to use for the [`GltfMaterial::clearcoat_roughness_texture`].
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     pub clearcoat_roughness_channel: UvChannel,
@@ -141,6 +176,10 @@ pub struct GltfMaterial {
     /// [`GltfMaterial::clearcoat_perceptual_roughness`] factor.
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     pub clearcoat_roughness_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::clearcoat_roughness_texture`].
+    #[cfg(feature = "pbr_multi_layer_material_textures")]
+    pub clearcoat_roughness_texture_transform: Affine2,
 
     /// The UV channel to use for the [`GltfMaterial::clearcoat_normal_texture`].
     #[cfg(feature = "pbr_multi_layer_material_textures")]
@@ -152,6 +191,10 @@ pub struct GltfMaterial {
     /// format as [`GltfMaterial::normal_map_texture`].
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     pub clearcoat_normal_texture: Option<Handle<Image>>,
+
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::clearcoat_normal_texture`].
+    #[cfg(feature = "pbr_multi_layer_material_textures")]
+    pub clearcoat_normal_texture_transform: Affine2,
 
     /// Increases the roughness along a specific direction, so that the specular
     /// highlight will be stretched instead of being a circular lobe.
@@ -171,6 +214,10 @@ pub struct GltfMaterial {
     #[cfg(feature = "pbr_anisotropy_texture")]
     pub anisotropy_texture: Option<Handle<Image>>,
 
+    /// The transform applied to the UVs before sampling the [`GltfMaterial::anisotropy_texture`].
+    #[cfg(feature = "pbr_anisotropy_texture")]
+    pub anisotropy_texture_transform: Affine2,
+
     /// Support two-sided lighting by automatically flipping the normals for "back" faces
     /// within the PBR lighting shader.
     pub double_sided: bool,
@@ -185,7 +232,7 @@ pub struct GltfMaterial {
     /// How to apply the alpha channel of the `base_color_texture`.
     pub alpha_mode: AlphaMode,
 
-    /// The transform applied to the UVs corresponding to `ATTRIBUTE_UV_0` on the mesh before sampling. Default is identity.
+    /// A global transform applied to UVs before per-texture transforms. Default is identity.
     pub uv_transform: Affine2,
 }
 
@@ -197,15 +244,18 @@ impl Default for GltfMaterial {
             base_color: Color::WHITE,
             base_color_channel: UvChannel::Uv0,
             base_color_texture: None,
+            base_color_texture_transform: Affine2::IDENTITY,
             emissive: LinearRgba::BLACK,
             emissive_channel: UvChannel::Uv0,
             emissive_texture: None,
+            emissive_texture_transform: Affine2::IDENTITY,
             // Matches Blender's default roughness.
             perceptual_roughness: 0.5,
             // Metallic should generally be set to 0.0 or 1.0.
             metallic: 0.0,
             metallic_roughness_channel: UvChannel::Uv0,
             metallic_roughness_texture: None,
+            metallic_roughness_texture_transform: Affine2::IDENTITY,
             // Minimum real-world reflectance is 2%, most materials between 2-5%
             // Expressed in a linear scale and equivalent to 4% reflectance see
             // <https://google.github.io/filament/Material%20Properties.pdf>
@@ -215,27 +265,37 @@ impl Default for GltfMaterial {
             specular_transmission_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_transmission_textures")]
             specular_transmission_texture: None,
+            #[cfg(feature = "pbr_transmission_textures")]
+            specular_transmission_texture_transform: Affine2::IDENTITY,
             thickness: 0.0,
             #[cfg(feature = "pbr_transmission_textures")]
             thickness_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_transmission_textures")]
             thickness_texture: None,
+            #[cfg(feature = "pbr_transmission_textures")]
+            thickness_texture_transform: Affine2::IDENTITY,
             ior: 1.5,
             attenuation_color: Color::WHITE,
             attenuation_distance: f32::INFINITY,
             occlusion_channel: UvChannel::Uv0,
             occlusion_texture: None,
+            occlusion_texture_transform: Affine2::IDENTITY,
             normal_map_channel: UvChannel::Uv0,
             normal_map_texture: None,
+            normal_map_texture_transform: Affine2::IDENTITY,
             #[cfg(feature = "pbr_specular_textures")]
             specular_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_specular_textures")]
             specular_texture: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_texture_transform: Affine2::IDENTITY,
             specular_tint: Color::WHITE,
             #[cfg(feature = "pbr_specular_textures")]
             specular_tint_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_specular_textures")]
             specular_tint_texture: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_tint_texture_transform: Affine2::IDENTITY,
             clearcoat: 0.0,
             clearcoat_perceptual_roughness: 0.5,
             #[cfg(feature = "pbr_multi_layer_material_textures")]
@@ -243,19 +303,27 @@ impl Default for GltfMaterial {
             #[cfg(feature = "pbr_multi_layer_material_textures")]
             clearcoat_texture: None,
             #[cfg(feature = "pbr_multi_layer_material_textures")]
+            clearcoat_texture_transform: Affine2::IDENTITY,
+            #[cfg(feature = "pbr_multi_layer_material_textures")]
             clearcoat_roughness_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_multi_layer_material_textures")]
             clearcoat_roughness_texture: None,
             #[cfg(feature = "pbr_multi_layer_material_textures")]
+            clearcoat_roughness_texture_transform: Affine2::IDENTITY,
+            #[cfg(feature = "pbr_multi_layer_material_textures")]
             clearcoat_normal_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_multi_layer_material_textures")]
             clearcoat_normal_texture: None,
+            #[cfg(feature = "pbr_multi_layer_material_textures")]
+            clearcoat_normal_texture_transform: Affine2::IDENTITY,
             anisotropy_strength: 0.0,
             anisotropy_rotation: 0.0,
             #[cfg(feature = "pbr_anisotropy_texture")]
             anisotropy_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_anisotropy_texture")]
             anisotropy_texture: None,
+            #[cfg(feature = "pbr_anisotropy_texture")]
+            anisotropy_texture_transform: Affine2::IDENTITY,
             double_sided: false,
             cull_mode: Some(Face::Back),
             unlit: false,

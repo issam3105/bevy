@@ -1,5 +1,7 @@
 use bevy_asset::{AssetPath, Handle};
 use bevy_image::Image;
+#[cfg(feature = "pbr_specular_textures")]
+use bevy_math::Affine2;
 
 use gltf::Material;
 
@@ -24,18 +26,42 @@ use {crate::loader::gltf_ext::material::parse_material_extension_texture, bevy_m
 ///
 /// See the specification:
 /// <https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_specular/README.md>
-#[derive(Default)]
 pub(crate) struct SpecularExtension {
     pub(crate) specular_factor: Option<f64>,
     #[cfg(feature = "pbr_specular_textures")]
     pub(crate) specular_channel: UvChannel,
     #[cfg(feature = "pbr_specular_textures")]
     pub(crate) specular_texture: Option<Handle<Image>>,
+    #[cfg(feature = "pbr_specular_textures")]
+    pub(crate) specular_texture_transform: Affine2,
     pub(crate) specular_color_factor: Option<[f64; 3]>,
     #[cfg(feature = "pbr_specular_textures")]
     pub(crate) specular_color_channel: UvChannel,
     #[cfg(feature = "pbr_specular_textures")]
     pub(crate) specular_color_texture: Option<Handle<Image>>,
+    #[cfg(feature = "pbr_specular_textures")]
+    pub(crate) specular_color_texture_transform: Affine2,
+}
+
+impl Default for SpecularExtension {
+    fn default() -> Self {
+        Self {
+            specular_factor: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_channel: UvChannel::Uv0,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_texture: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_texture_transform: Affine2::IDENTITY,
+            specular_color_factor: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_color_channel: UvChannel::Uv0,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_color_texture: None,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_color_texture_transform: Affine2::IDENTITY,
+        }
+    }
 }
 
 impl SpecularExtension {
@@ -58,24 +84,26 @@ impl SpecularExtension {
             .as_object()?;
 
         #[cfg(feature = "pbr_specular_textures")]
-        let (_specular_channel, _specular_texture) = parse_material_extension_texture(
-            material,
-            extension,
-            "specularTexture",
-            "specular",
-            textures,
-            asset_path.clone(),
-        );
+        let (_specular_channel, _specular_texture, _specular_texture_transform) =
+            parse_material_extension_texture(
+                material,
+                extension,
+                "specularTexture",
+                "specular",
+                textures,
+                asset_path.clone(),
+            );
 
         #[cfg(feature = "pbr_specular_textures")]
-        let (_specular_color_channel, _specular_color_texture) = parse_material_extension_texture(
-            material,
-            extension,
-            "specularColorTexture",
-            "specular color",
-            textures,
-            asset_path,
-        );
+        let (_specular_color_channel, _specular_color_texture, _specular_color_texture_transform) =
+            parse_material_extension_texture(
+                material,
+                extension,
+                "specularColorTexture",
+                "specular color",
+                textures,
+                asset_path,
+            );
 
         Some(SpecularExtension {
             specular_factor: extension.get("specularFactor").and_then(Value::as_f64),
@@ -83,6 +111,8 @@ impl SpecularExtension {
             specular_channel: _specular_channel,
             #[cfg(feature = "pbr_specular_textures")]
             specular_texture: _specular_texture,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_texture_transform: _specular_texture_transform,
             specular_color_factor: extension
                 .get("specularColorFactor")
                 .and_then(Value::as_array)
@@ -101,6 +131,8 @@ impl SpecularExtension {
             specular_color_channel: _specular_color_channel,
             #[cfg(feature = "pbr_specular_textures")]
             specular_color_texture: _specular_color_texture,
+            #[cfg(feature = "pbr_specular_textures")]
+            specular_color_texture_transform: _specular_color_texture_transform,
         })
     }
 }

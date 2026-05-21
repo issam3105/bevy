@@ -1,7 +1,11 @@
 use bevy_image::{ImageAddressMode, ImageFilterMode, ImageSamplerDescriptor};
 use bevy_math::Affine2;
 
-use gltf::texture::{MagFilter, MinFilter, Texture, TextureTransform, WrappingMode};
+use gltf::{
+    json::extensions::texture::TextureTransform as JsonTextureTransform,
+    texture::{Info, MagFilter, MinFilter, Texture, TextureTransform, WrappingMode},
+};
+use serde_json::Value;
 
 /// Extracts the texture sampler data from the glTF [`Texture`].
 pub(crate) fn texture_sampler(
@@ -62,4 +66,69 @@ pub(crate) fn texture_transform_to_affine2(texture_transform: TextureTransform) 
         -texture_transform.rotation(),
         texture_transform.offset().into(),
     )
+}
+
+pub(crate) fn json_texture_transform_to_affine2(
+    texture_transform: &JsonTextureTransform,
+) -> Affine2 {
+    Affine2::from_scale_angle_translation(
+        texture_transform.scale.0.into(),
+        -texture_transform.rotation.0,
+        texture_transform.offset.0.into(),
+    )
+}
+
+pub(crate) fn texture_info_tex_coord(info: &Info) -> u32 {
+    info.texture_transform()
+        .and_then(|texture_transform| texture_transform.tex_coord())
+        .unwrap_or_else(|| info.tex_coord())
+}
+
+pub(crate) fn texture_info_transform(info: &Info) -> Affine2 {
+    info.texture_transform()
+        .map(texture_transform_to_affine2)
+        .unwrap_or(Affine2::IDENTITY)
+}
+
+#[cfg(any(
+    feature = "pbr_anisotropy_texture",
+    feature = "pbr_specular_textures",
+    feature = "pbr_multi_layer_material_textures"
+))]
+pub(crate) fn json_texture_info_tex_coord(info: &gltf::json::texture::Info) -> u32 {
+    info.extensions
+        .as_ref()
+        .and_then(|extensions| extensions.texture_transform.as_ref())
+        .and_then(|texture_transform| texture_transform.tex_coord)
+        .unwrap_or(info.tex_coord)
+}
+
+#[cfg(any(
+    feature = "pbr_anisotropy_texture",
+    feature = "pbr_specular_textures",
+    feature = "pbr_multi_layer_material_textures"
+))]
+pub(crate) fn json_texture_info_transform(info: &gltf::json::texture::Info) -> Affine2 {
+    info.extensions
+        .as_ref()
+        .and_then(|extensions| extensions.texture_transform.as_ref())
+        .map(json_texture_transform_to_affine2)
+        .unwrap_or(Affine2::IDENTITY)
+}
+
+pub(crate) fn texture_transform_from_extension_value(
+    default_tex_coord: u32,
+    texture_transform: Option<&Value>,
+) -> (u32, Affine2) {
+    texture_transform
+        .and_then(|texture_transform| {
+            serde_json::from_value::<JsonTextureTransform>(texture_transform.clone()).ok()
+        })
+        .map(|texture_transform| {
+            (
+                texture_transform.tex_coord.unwrap_or(default_tex_coord),
+                json_texture_transform_to_affine2(&texture_transform),
+            )
+        })
+        .unwrap_or((default_tex_coord, Affine2::IDENTITY))
 }

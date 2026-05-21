@@ -20,6 +20,10 @@
 #import bevy_pbr::pbr_bindings::material_indices
 #endif  // BINDLESS
 
+fn transform_uv(uv_transform: mat3x3<f32>, uv: vec2<f32>) -> vec2<f32> {
+    return (uv_transform * vec3(uv, 1.0)).xy;
+}
+
 #ifdef PREPASS_FRAGMENT
 @fragment
 fn fragment(
@@ -39,9 +43,11 @@ fn fragment(
     let slot = mesh[in.instance_index].material_and_lightmap_bind_group_slot & 0xffffu;
     let flags = pbr_bindings::material_array[material_indices[slot].material].flags;
     let uv_transform = pbr_bindings::material_array[material_indices[slot].material].uv_transform;
+    let normal_map_texture_transform = pbr_bindings::material_array[material_indices[slot].material].normal_map_texture_transform;
 #else   // BINDLESS
     let flags = pbr_bindings::material.flags;
     let uv_transform = pbr_bindings::material.uv_transform;
+    let normal_map_texture_transform = pbr_bindings::material.normal_map_texture_transform;
 #endif  // BINDLESS
 
     // If we're in the crossfade section of a visibility range, conditionally
@@ -105,7 +111,7 @@ fn fragment(
                 pbr_bindings::normal_map_texture,
                 pbr_bindings::normal_map_sampler,
 #endif  // BINDLESS
-                uv,
+                transform_uv(normal_map_texture_transform, uv),
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 bias.ddx_uv,
                 bias.ddy_uv,

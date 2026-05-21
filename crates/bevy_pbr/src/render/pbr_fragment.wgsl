@@ -32,6 +32,10 @@
 #import bevy_pbr::pbr_bindings::material_indices
 #endif  // BINDLESS
 
+fn transform_uv(uv_transform: mat3x3<f32>, uv: vec2<f32>) -> vec2<f32> {
+    return (uv_transform * vec3(uv, 1.0)).xy;
+}
+
 // prepare a basic PbrInput from the vertex stage output, mesh binding and view binding
 fn pbr_input_from_vertex_output(
     in: VertexOutput,
@@ -117,9 +121,54 @@ fn pbr_input_from_standard_material(
 #ifdef VERTEX_UVS
 
 #ifdef BINDLESS
-    let uv_transform = pbr_bindings::material_array[material_indices[slot].material].uv_transform;
+    let material_index = material_indices[slot].material;
+    let uv_transform = pbr_bindings::material_array[material_index].uv_transform;
+    let base_color_texture_transform = pbr_bindings::material_array[material_index].base_color_texture_transform;
+    let emissive_texture_transform = pbr_bindings::material_array[material_index].emissive_texture_transform;
+    let metallic_roughness_texture_transform = pbr_bindings::material_array[material_index].metallic_roughness_texture_transform;
+    let normal_map_texture_transform = pbr_bindings::material_array[material_index].normal_map_texture_transform;
+    let occlusion_texture_transform = pbr_bindings::material_array[material_index].occlusion_texture_transform;
+#ifdef PBR_TRANSMISSION_TEXTURES_SUPPORTED
+    let diffuse_transmission_texture_transform = pbr_bindings::material_array[material_index].diffuse_transmission_texture_transform;
+    let specular_transmission_texture_transform = pbr_bindings::material_array[material_index].specular_transmission_texture_transform;
+    let thickness_texture_transform = pbr_bindings::material_array[material_index].thickness_texture_transform;
+#endif
+#ifdef PBR_SPECULAR_TEXTURES_SUPPORTED
+    let specular_texture_transform = pbr_bindings::material_array[material_index].specular_texture_transform;
+    let specular_tint_texture_transform = pbr_bindings::material_array[material_index].specular_tint_texture_transform;
+#endif
+#ifdef PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED
+    let clearcoat_texture_transform = pbr_bindings::material_array[material_index].clearcoat_texture_transform;
+    let clearcoat_roughness_texture_transform = pbr_bindings::material_array[material_index].clearcoat_roughness_texture_transform;
+    let clearcoat_normal_texture_transform = pbr_bindings::material_array[material_index].clearcoat_normal_texture_transform;
+#endif
+#ifdef PBR_ANISOTROPY_TEXTURE_SUPPORTED
+    let anisotropy_texture_transform = pbr_bindings::material_array[material_index].anisotropy_texture_transform;
+#endif
 #else   // BINDLESS
     let uv_transform = pbr_bindings::material.uv_transform;
+    let base_color_texture_transform = pbr_bindings::material.base_color_texture_transform;
+    let emissive_texture_transform = pbr_bindings::material.emissive_texture_transform;
+    let metallic_roughness_texture_transform = pbr_bindings::material.metallic_roughness_texture_transform;
+    let normal_map_texture_transform = pbr_bindings::material.normal_map_texture_transform;
+    let occlusion_texture_transform = pbr_bindings::material.occlusion_texture_transform;
+#ifdef PBR_TRANSMISSION_TEXTURES_SUPPORTED
+    let diffuse_transmission_texture_transform = pbr_bindings::material.diffuse_transmission_texture_transform;
+    let specular_transmission_texture_transform = pbr_bindings::material.specular_transmission_texture_transform;
+    let thickness_texture_transform = pbr_bindings::material.thickness_texture_transform;
+#endif
+#ifdef PBR_SPECULAR_TEXTURES_SUPPORTED
+    let specular_texture_transform = pbr_bindings::material.specular_texture_transform;
+    let specular_tint_texture_transform = pbr_bindings::material.specular_tint_texture_transform;
+#endif
+#ifdef PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED
+    let clearcoat_texture_transform = pbr_bindings::material.clearcoat_texture_transform;
+    let clearcoat_roughness_texture_transform = pbr_bindings::material.clearcoat_roughness_texture_transform;
+    let clearcoat_normal_texture_transform = pbr_bindings::material.clearcoat_normal_texture_transform;
+#endif
+#ifdef PBR_ANISOTROPY_TEXTURE_SUPPORTED
+    let anisotropy_texture_transform = pbr_bindings::material.anisotropy_texture_transform;
+#endif
 #endif  // BINDLESS
 
 pbr_input.material.uv_transform = uv_transform;
@@ -205,9 +254,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::base_color_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_BASE_COLOR_UV_B
-                uv_b,
+                transform_uv(base_color_texture_transform, uv_b),
 #else
-                uv,
+                transform_uv(base_color_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 bias.ddx_uv,
@@ -282,9 +331,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::specular_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_SPECULAR_UV_B
-                uv_b,
+                transform_uv(specular_texture_transform, uv_b),
 #else   // STANDARD_MATERIAL_SPECULAR_UV_B
-                uv,
+                transform_uv(specular_texture_transform, uv),
 #endif  // STANDARD_MATERIAL_SPECULAR_UV_B
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -314,9 +363,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::specular_tint_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_SPECULAR_TINT_UV_B
-                uv_b,
+                transform_uv(specular_tint_texture_transform, uv_b),
 #else   // STANDARD_MATERIAL_SPECULAR_TINT_UV_B
-                uv,
+                transform_uv(specular_tint_texture_transform, uv),
 #endif  // STANDARD_MATERIAL_SPECULAR_TINT_UV_B
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -354,9 +403,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::emissive_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_EMISSIVE_UV_B
-                    uv_b,
+                    transform_uv(emissive_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(emissive_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -395,9 +444,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::metallic_roughness_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_METALLIC_ROUGHNESS_UV_B
-                    uv_b,
+                    transform_uv(metallic_roughness_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(metallic_roughness_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -439,9 +488,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::clearcoat_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_CLEARCOAT_UV_B
-                    uv_b,
+                    transform_uv(clearcoat_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(clearcoat_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -480,9 +529,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::clearcoat_roughness_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_CLEARCOAT_ROUGHNESS_UV_B
-                    uv_b,
+                    transform_uv(clearcoat_roughness_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(clearcoat_roughness_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -522,9 +571,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::specular_transmission_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_SPECULAR_TRANSMISSION_UV_B
-                    uv_b,
+                    transform_uv(specular_transmission_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(specular_transmission_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -561,9 +610,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::thickness_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_THICKNESS_UV_B
-                    uv_b,
+                    transform_uv(thickness_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(thickness_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -608,9 +657,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::diffuse_transmission_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_DIFFUSE_TRANSMISSION_UV_B
-                    uv_b,
+                    transform_uv(diffuse_transmission_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(diffuse_transmission_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -642,9 +691,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::occlusion_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_OCCLUSION_UV_B
-                    uv_b,
+                    transform_uv(occlusion_texture_transform, uv_b),
 #else
-                    uv,
+                    transform_uv(occlusion_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -694,9 +743,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::normal_map_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_NORMAL_MAP_UV_B
-                uv_b,
+                transform_uv(normal_map_texture_transform, uv_b),
 #else
-                uv,
+                transform_uv(normal_map_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 bias.ddx_uv,
@@ -732,9 +781,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::clearcoat_normal_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_CLEARCOAT_NORMAL_UV_B
-                uv_b,
+                transform_uv(clearcoat_normal_texture_transform, uv_b),
 #else
-                uv,
+                transform_uv(clearcoat_normal_texture_transform, uv),
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 bias.ddx_uv,
@@ -793,9 +842,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::anisotropy_sampler,
 #endif
 #ifdef STANDARD_MATERIAL_ANISOTROPY_UV_B
-                    uv_b,
+                    transform_uv(anisotropy_texture_transform, uv_b),
 #else   // STANDARD_MATERIAL_ANISOTROPY_UV_B
-                    uv,
+                    transform_uv(anisotropy_texture_transform, uv),
 #endif  // STANDARD_MATERIAL_ANISOTROPY_UV_B
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
