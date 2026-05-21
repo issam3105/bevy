@@ -1,5 +1,4 @@
 use bevy_material::AlphaMode;
-use bevy_math::Affine2;
 use bevy_mesh::UvChannel;
 
 use gltf::{json::texture::Info, Material};
@@ -7,8 +6,6 @@ use gltf::{json::texture::Info, Material};
 use serde_json::value;
 
 use crate::GltfAssetLabel;
-
-use super::texture::texture_transform_to_affine2;
 
 #[cfg(any(
     feature = "pbr_anisotropy_texture",
@@ -130,36 +127,6 @@ pub(crate) fn needs_tangents(material: &Material) -> bool {
     .unwrap_or(false)
 }
 
-pub(crate) fn warn_on_differing_texture_transforms(
-    material: &Material,
-    info: &gltf::texture::Info,
-    texture_transform: Affine2,
-    texture_kind: &str,
-) {
-    let has_differing_texture_transform = info
-        .texture_transform()
-        .map(texture_transform_to_affine2)
-        .is_some_and(|t| t != texture_transform);
-    if has_differing_texture_transform {
-        let material_name = material
-            .name()
-            .map(|n| format!("the material \"{n}\""))
-            .unwrap_or_else(|| "an unnamed material".to_string());
-        let texture_name = info
-            .texture()
-            .name()
-            .map(|n| format!("its {texture_kind} texture \"{n}\""))
-            .unwrap_or_else(|| format!("its unnamed {texture_kind} texture"));
-        let material_index = material
-            .index()
-            .map(|i| format!("index {i}"))
-            .unwrap_or_else(|| "default".to_string());
-        tracing::warn!(
-            "Only texture transforms on base color textures are supported, but {material_name} ({material_index}) \
-            has a texture transform on {texture_name} (index {}), which will be ignored.", info.texture().index()
-        );
-    }
-}
 
 pub(crate) fn material_label(material: &Material, is_scale_inverted: bool) -> GltfAssetLabel {
     if let Some(index) = material.index() {

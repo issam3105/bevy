@@ -2,6 +2,7 @@ use bevy_image::{ImageAddressMode, ImageFilterMode, ImageSamplerDescriptor};
 use bevy_math::Affine2;
 
 use gltf::texture::{MagFilter, MinFilter, Texture, TextureTransform, WrappingMode};
+use serde_json::{Map, Value};
 
 /// Extracts the texture sampler data from the glTF [`Texture`].
 pub(crate) fn texture_sampler(
@@ -62,4 +63,44 @@ pub(crate) fn texture_transform_to_affine2(texture_transform: TextureTransform) 
         -texture_transform.rotation(),
         texture_transform.offset().into(),
     )
+}
+
+/// Parses a `KHR_texture_transform` extension from a raw JSON extensions map.
+///
+/// Used for texture types (e.g. normal map, occlusion) whose high-level gltf
+/// types don't expose `texture_transform()` directly.
+pub(crate) fn texture_transform_from_extensions(
+    extensions: Option<&Map<String, Value>>,
+) -> Affine2 {
+    let Some(ext_map) = extensions else {
+        return Affine2::IDENTITY;
+    };
+    let Some(khr) = ext_map.get("KHR_texture_transform") else {
+        return Affine2::IDENTITY;
+    };
+    let offset = khr
+        .get("offset")
+        .and_then(|v| v.as_array())
+        .and_then(|arr| {
+            Some([
+                arr.first()?.as_f64()? as f32,
+                arr.get(1)?.as_f64()? as f32,
+            ])
+        })
+        .unwrap_or([0.0, 0.0]);
+    let rotation = khr
+        .get("rotation")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0) as f32;
+    let scale = khr
+        .get("scale")
+        .and_then(|v| v.as_array())
+        .and_then(|arr| {
+            Some([
+                arr.first()?.as_f64()? as f32,
+                arr.get(1)?.as_f64()? as f32,
+            ])
+        })
+        .unwrap_or([1.0, 1.0]);
+    Affine2::from_scale_angle_translation(scale.into(), -rotation, offset.into())
 }

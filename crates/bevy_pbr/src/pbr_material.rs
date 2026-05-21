@@ -781,6 +781,22 @@ pub struct StandardMaterial {
 
     /// The transform applied to the UVs corresponding to `ATTRIBUTE_UV_0` on the mesh before sampling. Default is identity.
     pub uv_transform: Affine2,
+
+    /// Per-texture UV transform for the emissive texture. When set to a non-identity value,
+    /// overrides `uv_transform` for the emissive texture. Default is identity.
+    pub emissive_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the normal map texture. When set to a non-identity value,
+    /// overrides `uv_transform` for the normal map. Default is identity.
+    pub normal_map_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the metallic/roughness texture. When set to a non-identity
+    /// value, overrides `uv_transform` for the metallic/roughness texture. Default is identity.
+    pub metallic_roughness_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the occlusion texture. When set to a non-identity value,
+    /// overrides `uv_transform` for the occlusion texture. Default is identity.
+    pub occlusion_uv_transform: Affine2,
 }
 
 impl StandardMaterial {
@@ -936,6 +952,10 @@ impl Default for StandardMaterial {
             opaque_render_method: OpaqueRendererMethod::Auto,
             deferred_lighting_pass_id: DEFAULT_PBR_DEFERRED_LIGHTING_PASS_ID,
             uv_transform: Affine2::IDENTITY,
+            emissive_uv_transform: Affine2::IDENTITY,
+            normal_map_uv_transform: Affine2::IDENTITY,
+            metallic_roughness_uv_transform: Affine2::IDENTITY,
+            occlusion_uv_transform: Affine2::IDENTITY,
         }
     }
 }
@@ -1020,6 +1040,14 @@ pub struct StandardMaterialUniform {
     pub attenuation_color: Vec4,
     /// The transform applied to the UVs corresponding to `ATTRIBUTE_UV_0` on the mesh before sampling. Default is identity.
     pub uv_transform: Mat3,
+    /// Per-texture UV transform for the emissive texture.
+    pub emissive_uv_transform: Mat3,
+    /// Per-texture UV transform for the normal map texture.
+    pub normal_map_uv_transform: Mat3,
+    /// Per-texture UV transform for the metallic/roughness texture.
+    pub metallic_roughness_uv_transform: Mat3,
+    /// Per-texture UV transform for the occlusion texture.
+    pub occlusion_uv_transform: Mat3,
     /// Specular intensity for non-metals on a linear scale of [0.0, 1.0]
     /// defaults to 0.5 which is mapped to 4% reflectance in the shader
     pub reflectance: Vec3,
@@ -1208,6 +1236,10 @@ impl AsBindGroupShaderType<StandardMaterialUniform> for StandardMaterial {
             max_relief_mapping_search_steps: self.parallax_mapping_method.max_steps(),
             deferred_lighting_pass_id: self.deferred_lighting_pass_id as u32,
             uv_transform: self.uv_transform.into(),
+            emissive_uv_transform: self.emissive_uv_transform.into(),
+            normal_map_uv_transform: self.normal_map_uv_transform.into(),
+            metallic_roughness_uv_transform: self.metallic_roughness_uv_transform.into(),
+            occlusion_uv_transform: self.occlusion_uv_transform.into(),
         }
     }
 }

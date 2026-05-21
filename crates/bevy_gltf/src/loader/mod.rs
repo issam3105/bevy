@@ -26,7 +26,7 @@ use bevy_image::{
     ImageType, TextureError,
 };
 use bevy_light::{DirectionalLight, PointLight, SpotLight};
-use bevy_math::{Mat4, Vec3};
+use bevy_math::{Affine2, Mat4, Vec3};
 #[cfg(feature = "pbr_transmission_textures")]
 use bevy_mesh::UvChannel;
 use bevy_mesh::{
@@ -66,13 +66,10 @@ use self::{
     extensions::{AnisotropyExtension, ClearcoatExtension, SpecularExtension},
     gltf_ext::{
         check_for_cycles, get_linear_textures,
-        material::{
-            alpha_mode, material_label, needs_tangents, uv_channel,
-            warn_on_differing_texture_transforms,
-        },
+        material::{alpha_mode, material_label, needs_tangents, uv_channel},
         mesh::{primitive_name, primitive_topology},
         scene::{node_name, node_transform},
-        texture::{texture_sampler, texture_transform_to_affine2},
+        texture::{texture_sampler, texture_transform_from_extensions, texture_transform_to_affine2},
     },
 };
 use crate::convert_coordinates::GltfConvertCoordinates;
@@ -1280,6 +1277,10 @@ fn load_material(
         .normal_texture()
         .map(|info| uv_channel(material, "normal map", info.tex_coord()))
         .unwrap_or_default();
+    let normal_map_uv_transform = material
+        .normal_texture()
+        .map(|normal_texture| texture_transform_from_extensions(normal_texture.extensions()))
+        .unwrap_or(Affine2::IDENTITY);
     let normal_map_texture: Option<Handle<Image>> =
         material.normal_texture().map(|normal_texture| {
             // TODO: handle normal_texture.scale
@@ -1293,8 +1294,11 @@ fn load_material(
         .metallic_roughness_texture()
         .map(|info| uv_channel(material, "metallic/roughness", info.tex_coord()))
         .unwrap_or_default();
+    let metallic_roughness_uv_transform = pbr
+        .metallic_roughness_texture()
+        .and_then(|info| info.texture_transform().map(texture_transform_to_affine2))
+        .unwrap_or(Affine2::IDENTITY);
     let metallic_roughness_texture = pbr.metallic_roughness_texture().map(|info| {
-        warn_on_differing_texture_transforms(material, &info, uv_transform, "metallic/roughness");
         textures
             .get(info.texture().index())
             .cloned()
@@ -1305,6 +1309,10 @@ fn load_material(
         .occlusion_texture()
         .map(|info| uv_channel(material, "occlusion", info.tex_coord()))
         .unwrap_or_default();
+    let occlusion_uv_transform = material
+        .occlusion_texture()
+        .map(|occlusion_texture| texture_transform_from_extensions(occlusion_texture.extensions()))
+        .unwrap_or(Affine2::IDENTITY);
     let occlusion_texture = material.occlusion_texture().map(|occlusion_texture| {
         // TODO: handle occlusion_texture.strength() (a scalar multiplier for occlusion strength)
         textures
@@ -1318,9 +1326,11 @@ fn load_material(
         .emissive_texture()
         .map(|info| uv_channel(material, "emissive", info.tex_coord()))
         .unwrap_or_default();
+    let emissive_uv_transform = material
+        .emissive_texture()
+        .and_then(|info| info.texture_transform().map(texture_transform_to_affine2))
+        .unwrap_or(Affine2::IDENTITY);
     let emissive_texture = material.emissive_texture().map(|info| {
-        // TODO: handle occlusion_texture.strength() (a scalar multiplier for occlusion strength)
-        warn_on_differing_texture_transforms(material, &info, uv_transform, "emissive");
         textures
             .get(info.texture().index())
             .cloned()
@@ -1457,6 +1467,10 @@ fn load_material(
         unlit: material.unlit(),
         alpha_mode: alpha_mode(material),
         uv_transform,
+        emissive_uv_transform,
+        normal_map_uv_transform,
+        metallic_roughness_uv_transform,
+        occlusion_uv_transform,
         clearcoat: clearcoat.clearcoat_factor.unwrap_or_default() as f32,
         clearcoat_perceptual_roughness: clearcoat.clearcoat_roughness_factor.unwrap_or_default()
             as f32,

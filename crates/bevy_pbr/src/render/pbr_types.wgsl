@@ -7,6 +7,10 @@ struct StandardMaterial {
     emissive: vec4<f32>,
     attenuation_color: vec4<f32>,
     uv_transform: mat3x3<f32>,
+    emissive_uv_transform: mat3x3<f32>,
+    normal_map_uv_transform: mat3x3<f32>,
+    metallic_roughness_uv_transform: mat3x3<f32>,
+    occlusion_uv_transform: mat3x3<f32>,
     reflectance: vec3<f32>,
     perceptual_roughness: f32,
     metallic: f32,
@@ -90,6 +94,10 @@ fn standard_material_new() -> StandardMaterial {
     material.deferred_lighting_pass_id = 1u;
     // scale 1, translation 0, rotation 0
     material.uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.emissive_uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.normal_map_uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.metallic_roughness_uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    material.occlusion_uv_transform = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
     return material;
 }

@@ -187,6 +187,18 @@ pub struct GltfMaterial {
 
     /// The transform applied to the UVs corresponding to `ATTRIBUTE_UV_0` on the mesh before sampling. Default is identity.
     pub uv_transform: Affine2,
+
+    /// Per-texture UV transform for the emissive texture. Overrides `uv_transform` for the emissive texture. Default is identity.
+    pub emissive_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the normal map texture. Overrides `uv_transform` for the normal map. Default is identity.
+    pub normal_map_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the metallic/roughness texture. Overrides `uv_transform` for metallic/roughness. Default is identity.
+    pub metallic_roughness_uv_transform: Affine2,
+
+    /// Per-texture UV transform for the occlusion texture. Overrides `uv_transform` for the occlusion texture. Default is identity.
+    pub occlusion_uv_transform: Affine2,
 }
 
 impl Default for GltfMaterial {
@@ -261,6 +273,10 @@ impl Default for GltfMaterial {
             unlit: false,
             alpha_mode: AlphaMode::Opaque,
             uv_transform: Affine2::IDENTITY,
+            emissive_uv_transform: Affine2::IDENTITY,
+            normal_map_uv_transform: Affine2::IDENTITY,
+            metallic_roughness_uv_transform: Affine2::IDENTITY,
+            occlusion_uv_transform: Affine2::IDENTITY,
         }
     }
 }

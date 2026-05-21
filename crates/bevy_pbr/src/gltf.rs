@@ -90,6 +90,10 @@ pub fn standard_material_from_gltf_material(material: &GltfMaterial) -> Standard
         unlit: material.unlit,
         alpha_mode: material.alpha_mode,
         uv_transform: material.uv_transform,
+        emissive_uv_transform: material.emissive_uv_transform,
+        normal_map_uv_transform: material.normal_map_uv_transform,
+        metallic_roughness_uv_transform: material.metallic_roughness_uv_transform,
+        occlusion_uv_transform: material.occlusion_uv_transform,
         ..Default::default()
     }
 }

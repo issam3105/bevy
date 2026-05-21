@@ -118,18 +118,29 @@ fn pbr_input_from_standard_material(
 
 #ifdef BINDLESS
     let uv_transform = pbr_bindings::material_array[material_indices[slot].material].uv_transform;
+    let emissive_uv_transform = pbr_bindings::material_array[material_indices[slot].material].emissive_uv_transform;
+    let normal_map_uv_transform = pbr_bindings::material_array[material_indices[slot].material].normal_map_uv_transform;
+    let metallic_roughness_uv_transform = pbr_bindings::material_array[material_indices[slot].material].metallic_roughness_uv_transform;
+    let occlusion_uv_transform = pbr_bindings::material_array[material_indices[slot].material].occlusion_uv_transform;
 #else   // BINDLESS
     let uv_transform = pbr_bindings::material.uv_transform;
+    let emissive_uv_transform = pbr_bindings::material.emissive_uv_transform;
+    let normal_map_uv_transform = pbr_bindings::material.normal_map_uv_transform;
+    let metallic_roughness_uv_transform = pbr_bindings::material.metallic_roughness_uv_transform;
+    let occlusion_uv_transform = pbr_bindings::material.occlusion_uv_transform;
 #endif  // BINDLESS
 
 pbr_input.material.uv_transform = uv_transform;
 
 #ifdef VERTEX_UVS_A
+    // Raw UV before global transform, used for per-texture transform overrides.
+    let raw_uv = in.uv;
     var uv = (uv_transform * vec3(in.uv, 1.0)).xy;
 #endif
 
 // TODO: Transforming UVs mean we need to apply derivative chain rule for meshlet mesh material pass
 #ifdef VERTEX_UVS_B
+    let raw_uv_b = in.uv_b;
     var uv_b = (uv_transform * vec3(in.uv_b, 1.0)).xy;
 #else
     var uv_b = uv;
@@ -340,6 +351,12 @@ pbr_input.material.uv_transform = uv_transform;
 
 #ifdef VERTEX_UVS
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_EMISSIVE_TEXTURE_BIT) != 0u) {
+#ifdef VERTEX_UVS_A
+            let emissive_uv = (emissive_uv_transform * vec3(raw_uv, 1.0)).xy;
+#endif
+#ifdef VERTEX_UVS_B
+            let emissive_uv_b = (emissive_uv_transform * vec3(raw_uv_b, 1.0)).xy;
+#endif
             emissive = vec4<f32>(emissive.rgb *
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 textureSampleGrad(
@@ -354,9 +371,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::emissive_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_EMISSIVE_UV_B
-                    uv_b,
+                    emissive_uv_b,
 #else
-                    uv,
+                    emissive_uv,
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -381,6 +398,12 @@ pbr_input.material.uv_transform = uv_transform;
 
 #ifdef VERTEX_UVS
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_METALLIC_ROUGHNESS_TEXTURE_BIT) != 0u) {
+#ifdef VERTEX_UVS_A
+            let metallic_roughness_uv = (metallic_roughness_uv_transform * vec3(raw_uv, 1.0)).xy;
+#endif
+#ifdef VERTEX_UVS_B
+            let metallic_roughness_uv_b = (metallic_roughness_uv_transform * vec3(raw_uv_b, 1.0)).xy;
+#endif
             let metallic_roughness =
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 textureSampleGrad(
@@ -395,9 +418,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::metallic_roughness_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_METALLIC_ROUGHNESS_UV_B
-                    uv_b,
+                    metallic_roughness_uv_b,
 #else
-                    uv,
+                    metallic_roughness_uv,
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -628,6 +651,12 @@ pbr_input.material.uv_transform = uv_transform;
         var specular_occlusion: f32 = 1.0;
 #ifdef VERTEX_UVS
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_OCCLUSION_TEXTURE_BIT) != 0u) {
+#ifdef VERTEX_UVS_A
+            let occlusion_uv = (occlusion_uv_transform * vec3(raw_uv, 1.0)).xy;
+#endif
+#ifdef VERTEX_UVS_B
+            let occlusion_uv_b = (occlusion_uv_transform * vec3(raw_uv_b, 1.0)).xy;
+#endif
             diffuse_occlusion *=
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 textureSampleGrad(
@@ -642,9 +671,9 @@ pbr_input.material.uv_transform = uv_transform;
                     pbr_bindings::occlusion_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_OCCLUSION_UV_B
-                    uv_b,
+                    occlusion_uv_b,
 #else
-                    uv,
+                    occlusion_uv,
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                     bias.ddx_uv,
@@ -694,9 +723,9 @@ pbr_input.material.uv_transform = uv_transform;
                 pbr_bindings::normal_map_sampler,
 #endif  // BINDLESS
 #ifdef STANDARD_MATERIAL_NORMAL_MAP_UV_B
-                uv_b,
+                (normal_map_uv_transform * vec3(raw_uv_b, 1.0)).xy,
 #else
-                uv,
+                (normal_map_uv_transform * vec3(raw_uv, 1.0)).xy,
 #endif
 #ifdef MESHLET_MESH_MATERIAL_PASS
                 bias.ddx_uv,

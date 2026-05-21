@@ -39,9 +39,11 @@ fn fragment(
     let slot = mesh[in.instance_index].material_and_lightmap_bind_group_slot & 0xffffu;
     let flags = pbr_bindings::material_array[material_indices[slot].material].flags;
     let uv_transform = pbr_bindings::material_array[material_indices[slot].material].uv_transform;
+    let normal_map_uv_transform = pbr_bindings::material_array[material_indices[slot].material].normal_map_uv_transform;
 #else   // BINDLESS
     let flags = pbr_bindings::material.flags;
     let uv_transform = pbr_bindings::material.uv_transform;
+    let normal_map_uv_transform = pbr_bindings::material.normal_map_uv_transform;
 #endif  // BINDLESS
 
     // If we're in the crossfade section of a visibility range, conditionally
@@ -78,9 +80,9 @@ fn fragment(
 
 // TODO: Transforming UVs mean we need to apply derivative chain rule for meshlet mesh material pass
 #ifdef STANDARD_MATERIAL_NORMAL_MAP_UV_B
-        let uv = (uv_transform * vec3(in.uv_b, 1.0)).xy;
+        let uv = (normal_map_uv_transform * vec3(in.uv_b, 1.0)).xy;
 #else
-        let uv = (uv_transform * vec3(in.uv, 1.0)).xy;
+        let uv = (normal_map_uv_transform * vec3(in.uv, 1.0)).xy;
 #endif
 
         // Fill in the sample bias so we can sample from textures.
