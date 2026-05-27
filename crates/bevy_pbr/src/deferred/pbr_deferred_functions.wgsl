@@ -31,7 +31,10 @@ fn deferred_gbuffer_from_pbr_input(in: PbrInput) -> vec4<u32> {
     let rec_709_coeffs = vec3<f32>(0.2126, 0.7152, 0.0722);
     let diffuse_occlusion = dot(in.diffuse_occlusion, rec_709_coeffs);
     // Only monochrome specular supported.
-    let reflectance = dot(in.material.reflectance, rec_709_coeffs);
+    let reflectance = dot(
+        sqrt(in.material.reflectance * in.material.reflectance * in.material.specular_factor),
+        rec_709_coeffs,
+    );
 #ifdef WEBGL2 // More crunched for webgl so we can also fit depth.
     var props = deferred_types::pack_unorm3x4_plus_unorm_20_(vec4(
         reflectance,

@@ -259,8 +259,11 @@ pbr_input.material.uv_transform = uv_transform;
 #ifdef BINDLESS
         pbr_input.material.reflectance =
                 pbr_bindings::material_array[material_indices[slot].material].reflectance;
+        pbr_input.material.specular_factor =
+                pbr_bindings::material_array[material_indices[slot].material].specular_factor;
 #else   // BINDLESS
         pbr_input.material.reflectance = pbr_bindings::material.reflectance;
+        pbr_input.material.specular_factor = pbr_bindings::material.specular_factor;
 #endif  // BINDLESS
 
 #ifdef PBR_SPECULAR_TEXTURES_SUPPORTED
@@ -293,9 +296,7 @@ pbr_input.material.uv_transform = uv_transform;
                     bias.mip_bias,
 #endif  // MESHLET_MESH_MATERIAL_PASS
             ).a;
-            // This 0.5 factor is from the `KHR_materials_specular` specification:
-            // <https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_specular#materials-with-reflectance-parameter>
-            pbr_input.material.reflectance *= specular * 0.5;
+            pbr_input.material.specular_factor *= specular;
         }
 
         // Specular tint texture
@@ -325,7 +326,7 @@ pbr_input.material.uv_transform = uv_transform;
                     bias.mip_bias,
 #endif  // MESHLET_MESH_MATERIAL_PASS
             ).rgb;
-            pbr_input.material.reflectance *= specular_tint;
+            pbr_input.material.specular_factor *= specular_tint;
         }
 
 #endif  // VERTEX_UVS

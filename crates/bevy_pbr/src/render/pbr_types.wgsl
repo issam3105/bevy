@@ -8,6 +8,7 @@ struct StandardMaterial {
     attenuation_color: vec4<f32>,
     uv_transform: mat3x3<f32>,
     reflectance: vec3<f32>,
+    specular_factor: vec3<f32>,
     perceptual_roughness: f32,
     metallic: f32,
     diffuse_transmission: f32,
@@ -74,6 +75,7 @@ fn standard_material_new() -> StandardMaterial {
     material.perceptual_roughness = 0.5;
     material.metallic = 0.00;
     material.reflectance = vec3<f32>(0.5);
+    material.specular_factor = vec3<f32>(1.0);
     material.diffuse_transmission = 0.0;
     material.specular_transmission = 0.0;
     material.thickness = 0.0;

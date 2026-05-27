@@ -195,6 +195,9 @@ pub struct StandardMaterial {
     #[doc(alias = "specular_color")]
     pub specular_tint: Color,
 
+    /// Linear multiplier for dielectric specular F0.
+    pub specular_factor: Color,
+
     /// The amount of light transmitted _diffusely_ through the material (i.e. “translucency”).
     ///
     /// Implemented as a second, flipped [Lambertian diffuse](https://en.wikipedia.org/wiki/Lambertian_reflectance) lobe,
@@ -897,6 +900,7 @@ impl Default for StandardMaterial {
             #[cfg(feature = "pbr_specular_textures")]
             specular_texture: None,
             specular_tint: Color::WHITE,
+            specular_factor: Color::WHITE,
             #[cfg(feature = "pbr_specular_textures")]
             specular_tint_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_specular_textures")]
@@ -1023,6 +1027,8 @@ pub struct StandardMaterialUniform {
     /// Specular intensity for non-metals on a linear scale of [0.0, 1.0]
     /// defaults to 0.5 which is mapped to 4% reflectance in the shader
     pub reflectance: Vec3,
+    /// Linear multiplier for dielectric specular F0.
+    pub specular_factor: Vec3,
     /// Linear perceptual roughness, clamped to [0.089, 1.0] in the shader
     /// Defaults to minimum of 0.089
     pub roughness: f32,
@@ -1188,6 +1194,7 @@ impl AsBindGroupShaderType<StandardMaterialUniform> for StandardMaterial {
             roughness: self.perceptual_roughness,
             metallic: self.metallic,
             reflectance: LinearRgba::from(self.specular_tint).to_vec3() * self.reflectance,
+            specular_factor: LinearRgba::from(self.specular_factor).to_vec3(),
             clearcoat: self.clearcoat,
             clearcoat_perceptual_roughness: self.clearcoat_perceptual_roughness,
             anisotropy_strength: self.anisotropy_strength,

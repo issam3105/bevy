@@ -58,6 +58,9 @@ pub struct GltfMaterial {
     /// non-metals.
     pub specular_tint: Color,
 
+    /// Linear multiplier for dielectric specular F0.
+    pub specular_factor: Color,
+
     /// The UV channel to use for the
     /// [`GltfMaterial::specular_tint_texture`].
     #[cfg(feature = "pbr_specular_textures")]
@@ -232,6 +235,7 @@ impl Default for GltfMaterial {
             #[cfg(feature = "pbr_specular_textures")]
             specular_texture: None,
             specular_tint: Color::WHITE,
+            specular_factor: Color::WHITE,
             #[cfg(feature = "pbr_specular_textures")]
             specular_tint_channel: UvChannel::Uv0,
             #[cfg(feature = "pbr_specular_textures")]

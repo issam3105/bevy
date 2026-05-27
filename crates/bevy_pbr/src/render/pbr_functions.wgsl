@@ -293,6 +293,15 @@ fn calculate_F0(base_color: vec3<f32>, metallic: f32, reflectance: vec3<f32>) ->
     return mix(calculate_F0_dielectric(reflectance), base_color, metallic);
 }
 
+fn calculate_F0_with_specular_factor(
+    base_color: vec3<f32>,
+    metallic: f32,
+    reflectance: vec3<f32>,
+    specular_factor: vec3<f32>,
+) -> vec3<f32> {
+    return mix(calculate_F0_dielectric(reflectance) * specular_factor, base_color, metallic);
+}
+
 #ifdef CONTACT_SHADOWS
 #ifdef DEPTH_PREPASS
 fn calculate_contact_shadow(
@@ -347,6 +356,7 @@ fn apply_pbr_lighting(
     let ior = in.material.ior;
     let thickness = in.material.thickness;
     let reflectance = in.material.reflectance;
+    let specular_factor = in.material.specular_factor;
     let diffuse_transmission = in.material.diffuse_transmission;
     let specular_transmission = in.material.specular_transmission;
 
@@ -383,7 +393,12 @@ fn apply_pbr_lighting(
     // Calculate the world position of the second Lambertian lobe used for diffuse transmission, by subtracting material thickness
     let diffuse_transmissive_lobe_world_position = in.world_position - vec4<f32>(in.world_normal, 0.0) * thickness;
 
-    let F0 = calculate_F0(output_color.rgb, metallic, reflectance);
+    let F0 = calculate_F0_with_specular_factor(
+        output_color.rgb,
+        metallic,
+        reflectance,
+        specular_factor,
+    );
     let F_ab = lighting::F_AB(perceptual_roughness, NdotV);
 
     var direct_light: vec3<f32> = vec3<f32>(0.0);
@@ -402,7 +417,7 @@ fn apply_pbr_lighting(
     lighting_input.V = in.V;
     lighting_input.diffuse_color = diffuse_color;
     lighting_input.metallic = metallic;
-    lighting_input.F0_dielectric = calculate_F0_dielectric(reflectance);
+    lighting_input.F0_dielectric = calculate_F0_dielectric(reflectance) * specular_factor;
     lighting_input.F0_metallic = output_color.rgb;
     lighting_input.F_ab = F_ab;
 #ifdef STANDARD_MATERIAL_CLEARCOAT

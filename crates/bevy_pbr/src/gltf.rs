@@ -44,6 +44,7 @@ pub fn standard_material_from_gltf_material(material: &GltfMaterial) -> Standard
         metallic_roughness_texture: material.metallic_roughness_texture.clone(),
         reflectance: material.reflectance,
         specular_tint: material.specular_tint,
+        specular_factor: material.specular_factor,
         specular_transmission: material.specular_transmission,
         #[cfg(feature = "pbr_transmission_textures")]
         specular_transmission_channel: material.specular_transmission_channel.clone(),
