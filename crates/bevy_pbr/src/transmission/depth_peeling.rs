@@ -1,17 +1,16 @@
 use crate::{
-    get_mesh_instance_world_from_local, init_material_pipeline, DrawMesh, MaterialFragmentShader,
-    MaterialPipeline, MaterialVertexShader, MeshInputUniform, MeshPipeline, MeshPipelineKey,
-    MeshPipelineSystems, MeshUniform, PreparedMaterial, RenderMaterialInstances,
-    RenderMeshInstances, ScreenSpaceTransmission, SetMaterialBindGroup, SetMeshBindGroup,
-    SetMeshViewBindGroup, SetMeshViewBindingArrayBindGroup, ViewKeyCache, ViewTransmissionTexture,
-    MATERIAL_BIND_GROUP_INDEX,
+    init_material_pipeline, DrawMesh, MaterialFragmentShader, MaterialPipeline,
+    MaterialVertexShader, MeshPipeline, MeshPipelineKey, MeshPipelineSystems, PreparedMaterial,
+    RenderMaterialInstances, RenderMeshInstances, ScreenSpaceTransmission, SetMaterialBindGroup,
+    SetMeshBindGroup, SetMeshViewBindGroup, SetMeshViewBindingArrayBindGroup, ViewKeyCache,
+    ViewTransmissionTexture, MATERIAL_BIND_GROUP_INDEX,
 };
 
 use alloc::sync::Arc;
 use bevy_app::{App, Plugin};
 use bevy_asset::{embedded_asset, load_embedded_asset, AssetServer, Handle};
 use bevy_camera::{Camera, Camera3d};
-use bevy_core_pipeline::core_3d::{TransparentSortingInfo3d, CORE_3D_DEPTH_FORMAT};
+use bevy_core_pipeline::core_3d::CORE_3D_DEPTH_FORMAT;
 use bevy_ecs::{
     entity::{Entity, EntityHash},
     prelude::*,
@@ -29,16 +28,14 @@ use bevy_material::{
 };
 use bevy_mesh::{Mesh, Mesh3d, MeshVertexBufferLayoutRef};
 use bevy_render::{
-    batching::gpu_preprocessing::BatchedInstanceBuffers,
     camera::ExtractedCamera,
     erased_render_asset::ErasedRenderAssets,
     mesh::RenderMesh,
     render_asset::RenderAssets,
     render_phase::{
-        sort_phase_system, AddRenderCommand, CachedRenderPipelinePhaseItem, DrawFunctionId,
-        DrawFunctions, PhaseItem, PhaseItemExtraIndex, RenderCommand, RenderCommandResult,
-        SetItemPipeline, SortedPhaseItem, SortedRenderPhasePlugin, TrackedRenderPass,
-        ViewSortedRenderPhases,
+        AddRenderCommand, CachedRenderPipelinePhaseItem, DrawFunctionId, DrawFunctions, PhaseItem,
+        PhaseItemExtraIndex, RenderCommand, RenderCommandResult, SetItemPipeline,
+        SortedPhaseItem, SortedRenderPhasePlugin, TrackedRenderPass, ViewSortedRenderPhases,
     },
     render_resource::{
         binding_types::texture_2d, BindGroup, BindGroupEntries, BindGroupLayout,
@@ -111,8 +108,6 @@ impl Plugin for TransmissionDepthPeelingPlugin {
                     prepare_depth_peel_textures.in_set(RenderSystems::PrepareResources),
                     prepare_depth_peel_bind_groups.in_set(RenderSystems::PrepareBindGroups),
                     queue_depth_peeled_meshes.in_set(RenderSystems::QueueMeshes),
-                    sort_phase_system::<DepthPeelDepth3d>.in_set(RenderSystems::PhaseSort),
-                    sort_phase_system::<DepthPeelColor3d>.in_set(RenderSystems::PhaseSort),
                 ),
             );
     }
@@ -329,7 +324,6 @@ impl From<&DepthPeelPipeline> for DepthPeelDepthPipeline {
 }
 
 pub(super) struct DepthPeelDepth3d {
-    distance: f32,
     entity: (Entity, MainEntity),
     pipeline: CachedRenderPipelineId,
     draw_function: DrawFunctionId,
@@ -339,8 +333,6 @@ pub(super) struct DepthPeelDepth3d {
 }
 
 pub(super) struct DepthPeelColor3d {
-    sorting_info: TransparentSortingInfo3d,
-    distance: f32,
     entity: (Entity, MainEntity),
     pipeline: CachedRenderPipelineId,
     draw_function: DrawFunctionId,
@@ -397,15 +389,12 @@ impl_depth_peel_phase_item!(DepthPeelDepth3d);
 impl_depth_peel_phase_item!(DepthPeelColor3d);
 
 impl SortedPhaseItem for DepthPeelDepth3d {
-    type SortKey = bevy_math::FloatOrd;
+    type SortKey = ();
 
     fn sort_key(&self) -> Self::SortKey {
-        bevy_math::FloatOrd(self.distance)
     }
 
-    fn sort(items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {
-        items.sort_by_key(|_, item| item.sort_key());
-    }
+    fn sort(_items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {}
 
     fn recalculate_sort_keys(
         _items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
@@ -419,24 +408,17 @@ impl SortedPhaseItem for DepthPeelDepth3d {
 }
 
 impl SortedPhaseItem for DepthPeelColor3d {
-    type SortKey = bevy_math::FloatOrd;
+    type SortKey = ();
 
     fn sort_key(&self) -> Self::SortKey {
-        bevy_math::FloatOrd(self.distance)
     }
 
-    fn sort(items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {
-        items.sort_by_key(|_, item| item.sort_key());
-    }
+    fn sort(_items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {}
 
     fn recalculate_sort_keys(
-        items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
-        view: &ExtractedView,
+        _items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
+        _view: &ExtractedView,
     ) {
-        let rangefinder = view.rangefinder3d();
-        for item in items.values_mut() {
-            item.distance = item.sorting_info.sort_distance(&rangefinder);
-        }
     }
 
     fn indexed(&self) -> bool {
@@ -596,8 +578,6 @@ struct QueueDepthPeelParams<'w, 's> {
     render_materials: Res<'w, ErasedRenderAssets<PreparedMaterial>>,
     render_mesh_instances: Res<'w, RenderMeshInstances>,
     render_material_instances: Res<'w, RenderMaterialInstances>,
-    maybe_batched_instance_buffers:
-        Option<Res<'w, BatchedInstanceBuffers<MeshUniform, MeshInputUniform>>>,
     depth_phases: ResMut<'w, ViewSortedRenderPhases<DepthPeelDepth3d>>,
     color_phases: ResMut<'w, ViewSortedRenderPhases<DepthPeelColor3d>>,
     views: Query<
@@ -624,7 +604,6 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
         render_materials,
         render_mesh_instances,
         render_material_instances,
-        maybe_batched_instance_buffers,
         mut depth_phases,
         mut color_phases,
         views,
@@ -720,19 +699,7 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
                 }
             };
 
-            let sorting_info = TransparentSortingInfo3d::Sorted {
-                mesh_center: get_mesh_instance_world_from_local(
-                    *visible_entity,
-                    mesh_instance.current_uniform_index,
-                    &render_mesh_instances,
-                    maybe_batched_instance_buffers.as_deref(),
-                )
-                .transform_point3(mesh.aabb_center),
-                depth_bias: material.properties.depth_bias,
-            };
-
             depth_phase.add(DepthPeelDepth3d {
-                distance: 0.0,
                 entity: (Entity::PLACEHOLDER, *visible_entity),
                 pipeline: depth_pipeline_id,
                 draw_function: draw_depth,
@@ -741,8 +708,6 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
                 indexed: mesh.indexed(),
             });
             color_phase.add(DepthPeelColor3d {
-                sorting_info,
-                distance: 0.0,
                 entity: (Entity::PLACEHOLDER, *visible_entity),
                 pipeline: color_pipeline_id,
                 draw_function: draw_color,
