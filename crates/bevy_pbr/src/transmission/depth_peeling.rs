@@ -139,10 +139,8 @@ struct ViewDepthPeelBindGroups {
 
 #[derive(Resource)]
 struct DepthPeelPipeline {
-    mesh_pipeline: MeshPipeline,
+    depth_pipeline: DepthPeelDepthPipeline,
     material_pipeline: MaterialPipeline,
-    depth_shader: Handle<Shader>,
-    depth_view_layout: BindGroupLayoutDescriptor,
     depth_view_bind_group_layout: BindGroupLayout,
 }
 
@@ -166,21 +164,18 @@ fn init_depth_peel_pipeline(
         BindGroupLayoutDescriptor::new("transmission_depth_peel_view_layout", &entries);
 
     commands.insert_resource(DepthPeelPipeline {
-        mesh_pipeline: mesh_pipeline.clone(),
+        depth_pipeline: DepthPeelDepthPipeline {
+            mesh_pipeline: mesh_pipeline.clone(),
+            depth_shader: load_embedded_asset!(asset_server.as_ref(), "depth_prepass.wgsl"),
+            depth_view_layout,
+        },
         material_pipeline: material_pipeline.clone(),
-        depth_shader: load_embedded_asset!(asset_server.as_ref(), "depth_prepass.wgsl"),
-        depth_view_layout,
         depth_view_bind_group_layout,
     });
 }
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-struct DepthPeelDepthPipelineKey {
-    mesh_key: MeshPipelineKey,
-}
-
 impl SpecializedMeshPipeline for DepthPeelDepthPipeline {
-    type Key = DepthPeelDepthPipelineKey;
+    type Key = MeshPipelineKey;
 
     fn specialize(
         &self,
@@ -192,14 +187,14 @@ impl SpecializedMeshPipeline for DepthPeelDepthPipeline {
             "VERTEX_OUTPUT_INSTANCE_INDEX".into(),
             "TRANSMISSION_DEPTH_PEEL_PASS".into(),
         ];
-        if key.mesh_key.msaa_samples() > 1 {
+        if key.msaa_samples() > 1 {
             shader_defs.push("MULTISAMPLED".into());
         }
 
         let vertex_buffer_layout = layout
             .0
             .get_layout(&[Mesh::ATTRIBUTE_POSITION.at_shader_location(0)])?;
-        let view_layout = self.mesh_pipeline.get_view_layout(key.mesh_key.into());
+        let view_layout = self.mesh_pipeline.get_view_layout(key.into());
         let mesh_layout = self.mesh_pipeline.mesh_layouts.model_only.clone();
 
         Ok(RenderPipelineDescriptor {
@@ -224,8 +219,8 @@ impl SpecializedMeshPipeline for DepthPeelDepthPipeline {
                 ..Default::default()
             }),
             primitive: PrimitiveState {
-                topology: key.mesh_key.primitive_topology(),
-                strip_index_format: key.mesh_key.strip_index_format(),
+                topology: key.primitive_topology(),
+                strip_index_format: key.strip_index_format(),
                 cull_mode: None,
                 ..Default::default()
             },
@@ -237,7 +232,7 @@ impl SpecializedMeshPipeline for DepthPeelDepthPipeline {
                 bias: DepthBiasState::default(),
             }),
             multisample: MultisampleState {
-                count: key.mesh_key.msaa_samples(),
+                count: key.msaa_samples(),
                 ..Default::default()
             },
             immediate_size: 0,
@@ -313,36 +308,17 @@ impl SpecializedMeshPipeline for DepthPeelColorPipeline {
     }
 }
 
-impl From<&DepthPeelPipeline> for DepthPeelDepthPipeline {
-    fn from(pipeline: &DepthPeelPipeline) -> Self {
-        Self {
-            mesh_pipeline: pipeline.mesh_pipeline.clone(),
-            depth_shader: pipeline.depth_shader.clone(),
-            depth_view_layout: pipeline.depth_view_layout.clone(),
+macro_rules! depth_peel_phase_item {
+    ($ty:ident) => {
+        pub(super) struct $ty {
+            entity: (Entity, MainEntity),
+            pipeline: CachedRenderPipelineId,
+            draw_function: DrawFunctionId,
+            batch_range: Range<u32>,
+            extra_index: PhaseItemExtraIndex,
+            indexed: bool,
         }
-    }
-}
 
-pub(super) struct DepthPeelDepth3d {
-    entity: (Entity, MainEntity),
-    pipeline: CachedRenderPipelineId,
-    draw_function: DrawFunctionId,
-    batch_range: Range<u32>,
-    extra_index: PhaseItemExtraIndex,
-    indexed: bool,
-}
-
-pub(super) struct DepthPeelColor3d {
-    entity: (Entity, MainEntity),
-    pipeline: CachedRenderPipelineId,
-    draw_function: DrawFunctionId,
-    batch_range: Range<u32>,
-    extra_index: PhaseItemExtraIndex,
-    indexed: bool,
-}
-
-macro_rules! impl_depth_peel_phase_item {
-    ($ty:ty) => {
         impl PhaseItem for $ty {
             const AUTOMATIC_BATCHING: bool = false;
 
@@ -382,49 +358,29 @@ macro_rules! impl_depth_peel_phase_item {
                 self.pipeline
             }
         }
+
+        impl SortedPhaseItem for $ty {
+            type SortKey = ();
+
+            fn sort_key(&self) -> Self::SortKey {}
+
+            fn sort(_items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {}
+
+            fn recalculate_sort_keys(
+                _items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
+                _view: &ExtractedView,
+            ) {
+            }
+
+            fn indexed(&self) -> bool {
+                self.indexed
+            }
+        }
     };
 }
 
-impl_depth_peel_phase_item!(DepthPeelDepth3d);
-impl_depth_peel_phase_item!(DepthPeelColor3d);
-
-impl SortedPhaseItem for DepthPeelDepth3d {
-    type SortKey = ();
-
-    fn sort_key(&self) -> Self::SortKey {
-    }
-
-    fn sort(_items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {}
-
-    fn recalculate_sort_keys(
-        _items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
-        _view: &ExtractedView,
-    ) {
-    }
-
-    fn indexed(&self) -> bool {
-        self.indexed
-    }
-}
-
-impl SortedPhaseItem for DepthPeelColor3d {
-    type SortKey = ();
-
-    fn sort_key(&self) -> Self::SortKey {
-    }
-
-    fn sort(_items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>) {}
-
-    fn recalculate_sort_keys(
-        _items: &mut IndexMap<(Entity, MainEntity), Self, EntityHash>,
-        _view: &ExtractedView,
-    ) {
-    }
-
-    fn indexed(&self) -> bool {
-        self.indexed
-    }
-}
+depth_peel_phase_item!(DepthPeelDepth3d);
+depth_peel_phase_item!(DepthPeelColor3d);
 
 type DrawDepthPeelDepth = (
     SetItemPipeline,
@@ -663,11 +619,10 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
             );
             mesh_key |= MeshPipelineKey::READS_VIEW_TRANSMISSION_TEXTURE;
 
-            let depth_pipeline = DepthPeelDepthPipeline::from(depth_peel_pipeline.as_ref());
             let depth_pipeline_id = match depth_pipelines.specialize(
                 &pipeline_cache,
-                &depth_pipeline,
-                DepthPeelDepthPipelineKey { mesh_key },
+                &depth_peel_pipeline.depth_pipeline,
+                mesh_key,
                 &mesh.layout,
             ) {
                 Ok(id) => id,
