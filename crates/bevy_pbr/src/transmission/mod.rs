@@ -1,8 +1,9 @@
+mod depth_peeling;
 mod node;
 mod phase;
 mod texture;
 
-use bevy_app::{App, Plugin};
+use bevy_app::{App, Plugin, PostUpdate};
 use bevy_camera::Camera3d;
 use bevy_core_pipeline::{
     core_3d::{main_opaque_pass_3d, main_transparent_pass_3d},
@@ -23,7 +24,10 @@ pub use texture::ViewTransmissionTexture;
 use texture::prepare_core_3d_transmission_textures;
 
 use crate::{DrawMaterial, MeshPipelineKey};
-
+use depth_peeling::{
+    configure_depth_peeling_view_targets, depth_peeling_pass_3d, TransmissionDepthPeelingPlugin,
+};
+ 
 /// Enables screen-space transmission for cameras.
 pub struct ScreenSpaceTransmissionPlugin;
 
@@ -32,6 +36,8 @@ impl Plugin for ScreenSpaceTransmissionPlugin {
         load_shader_library!(app, "transmission.wgsl");
 
         app.add_plugins(ExtractComponentPlugin::<ScreenSpaceTransmission>::default())
+            .add_plugins(TransmissionDepthPeelingPlugin)
+            .add_systems(PostUpdate, configure_depth_peeling_view_targets)
             .register_required_components::<Camera3d, ScreenSpaceTransmission>();
 
         let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
@@ -53,10 +59,16 @@ impl Plugin for ScreenSpaceTransmissionPlugin {
             )
             .add_systems(
                 Core3d,
-                main_transmissive_pass_3d
-                    .after(main_opaque_pass_3d)
-                    .before(main_transparent_pass_3d)
-                    .in_set(Core3dSystems::MainPass),
+                (
+                    main_transmissive_pass_3d
+                        .after(main_opaque_pass_3d)
+                        .before(main_transparent_pass_3d)
+                        .in_set(Core3dSystems::MainPass),
+                    depth_peeling_pass_3d
+                        .after(main_transmissive_pass_3d)
+                        .before(main_transparent_pass_3d)
+                        .in_set(Core3dSystems::MainPass),
+                ),
             );
     }
 }
@@ -83,6 +95,11 @@ pub struct ScreenSpaceTransmission {
     ///   Keep in mind that depending on the platform and your window settings, this may cause the window to become
     ///   transparent.
     pub steps: usize,
+    /// Enables depth peeling for transmissive objects.
+    ///
+    /// When enabled, the transmission pass first peels `steps` depth layers of transmissive
+    /// geometry and then renders those layers back-to-front using an equal depth test.
+    pub depth_peeling: bool,
     /// The quality of the screen space specular transmission blur effect, applied to whatever's behind transmissive
     /// objects when their `roughness` is greater than `0.0`.
     ///
@@ -96,6 +113,7 @@ impl Default for ScreenSpaceTransmission {
     fn default() -> Self {
         Self {
             steps: 1,
+            depth_peeling: false,
             quality: Default::default(),
         }
     }

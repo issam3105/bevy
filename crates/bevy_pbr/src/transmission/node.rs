@@ -68,7 +68,9 @@ pub fn main_transmissive_pass_3d(
 
     if !transmissive_phase.items.is_empty() {
         let steps = transmission_settings.steps;
-        if steps > 0 {
+        if transmission_settings.depth_peeling && steps > 0 {
+            return;
+        } else if steps > 0 {
             let transmission =
                 transmission.expect("`ViewTransmissionTexture` should exist at this point");
 
