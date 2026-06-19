@@ -654,7 +654,7 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
                 }
             };
 
-            depth_phase.add(DepthPeelDepth3d {
+            depth_phase.add_retained(DepthPeelDepth3d {
                 entity: (Entity::PLACEHOLDER, *visible_entity),
                 pipeline: depth_pipeline_id,
                 draw_function: draw_depth,
@@ -662,7 +662,7 @@ fn queue_depth_peeled_meshes(params: QueueDepthPeelParams) {
                 extra_index: PhaseItemExtraIndex::None,
                 indexed: mesh.indexed(),
             });
-            color_phase.add(DepthPeelColor3d {
+            color_phase.add_retained(DepthPeelColor3d {
                 entity: (Entity::PLACEHOLDER, *visible_entity),
                 pipeline: color_pipeline_id,
                 draw_function: draw_color,
