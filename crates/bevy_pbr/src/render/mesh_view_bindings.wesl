@@ -112,6 +112,13 @@ const VISIBILITY_RANGE_UNIFORM_BUFFER_SIZE: u32 = 64u;
 @group(0) @binding(38) var dfg_lut_sampler: sampler;
 }
 
+@if(PBR_SHARED_MATERIAL_SAMPLERS) {
+@group(0) @binding(39) var pbr_linear_clamp_sampler: sampler;
+@group(0) @binding(40) var pbr_linear_repeat_sampler: sampler;
+@group(0) @binding(41) var pbr_nearest_clamp_sampler: sampler;
+@group(0) @binding(42) var pbr_nearest_repeat_sampler: sampler;
+}
+
 @if(ENVIRONMENT_MAP && MULTIPLE_LIGHT_PROBES_IN_ARRAY) {
 @group(1) @binding(0) var diffuse_environment_maps: binding_array<texture_cube<f32>, 8u>;
 @group(1) @binding(1) var specular_environment_maps: binding_array<texture_cube<f32>, 8u>;

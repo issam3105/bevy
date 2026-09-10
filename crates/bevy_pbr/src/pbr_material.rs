@@ -1,5 +1,7 @@
 use bevy_asset::Asset;
 use bevy_color::{Alpha, ColorToComponents};
+#[cfg(feature = "pbr_shared_material_samplers")]
+use bevy_image::{ImageAddressMode, ImageFilterMode};
 use bevy_material::OpaqueRendererMethod;
 use bevy_math::{Affine2, Affine3, Mat2, Mat3, Vec2, Vec3, Vec4};
 use bevy_mesh::{MeshVertexBufferLayoutRef, UvChannel};
@@ -22,7 +24,10 @@ use crate::{deferred::DEFAULT_PBR_DEFERRED_LIGHTING_PASS_ID, *};
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
 #[bind_group_data(StandardMaterialKey)]
 #[data(0, StandardMaterialUniform, binding_array(10))]
-#[bindless(index_table(range(0..31)))]
+#[cfg_attr(
+    not(feature = "pbr_shared_material_samplers"),
+    bindless(index_table(range(0..31)))
+)]
 #[reflect(Default, Debug, Clone)]
 pub struct StandardMaterial {
     /// The color of the surface of the material before lighting.
@@ -53,7 +58,7 @@ pub struct StandardMaterial {
     ///
     /// [`base_color`]: StandardMaterial::base_color
     #[texture(1)]
-    #[sampler(2)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(2))]
     #[dependency]
     pub base_color_texture: Option<Handle<Image>>,
 
@@ -113,7 +118,7 @@ pub struct StandardMaterial {
     ///
     /// [`emissive`]: StandardMaterial::emissive
     #[texture(3)]
-    #[sampler(4)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(4))]
     #[dependency]
     pub emissive_texture: Option<Handle<Image>>,
 
@@ -169,7 +174,7 @@ pub struct StandardMaterial {
     /// [`metallic`]: StandardMaterial::metallic
     /// [`perceptual_roughness`]: StandardMaterial::perceptual_roughness
     #[texture(5)]
-    #[sampler(6)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(6))]
     #[dependency]
     pub metallic_roughness_texture: Option<Handle<Image>>,
 
@@ -233,7 +238,13 @@ pub struct StandardMaterial {
     /// **Important:** The [`StandardMaterial::diffuse_transmission`] property must be set to a value higher than 0.0,
     /// or this texture won't have any effect.
     #[cfg_attr(feature = "pbr_transmission_textures", texture(19))]
-    #[cfg_attr(feature = "pbr_transmission_textures", sampler(20))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_transmission_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(20)
+    )]
     #[cfg(feature = "pbr_transmission_textures")]
     #[dependency]
     pub diffuse_transmission_texture: Option<Handle<Image>>,
@@ -278,7 +289,13 @@ pub struct StandardMaterial {
     /// **Important:** The [`StandardMaterial::specular_transmission`] property must be set to a value higher than 0.0,
     /// or this texture won't have any effect.
     #[cfg_attr(feature = "pbr_transmission_textures", texture(15))]
-    #[cfg_attr(feature = "pbr_transmission_textures", sampler(16))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_transmission_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(16)
+    )]
     #[cfg(feature = "pbr_transmission_textures")]
     #[dependency]
     pub specular_transmission_texture: Option<Handle<Image>>,
@@ -308,7 +325,13 @@ pub struct StandardMaterial {
     /// **Important:** The [`StandardMaterial::thickness`] property must be set to a value higher than 0.0,
     /// or this texture won't have any effect.
     #[cfg_attr(feature = "pbr_transmission_textures", texture(17))]
-    #[cfg_attr(feature = "pbr_transmission_textures", sampler(18))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_transmission_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(18)
+    )]
     #[cfg(feature = "pbr_transmission_textures")]
     #[dependency]
     pub thickness_texture: Option<Handle<Image>>,
@@ -412,7 +435,7 @@ pub struct StandardMaterial {
     /// }
     /// ```
     #[texture(9)]
-    #[sampler(10)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(10))]
     #[dependency]
     pub normal_map_texture: Option<Handle<Image>>,
 
@@ -441,7 +464,7 @@ pub struct StandardMaterial {
     /// In such cases, use the same image handle for both fields.
     /// Notably, this is the setup used by [glTF](https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html#baked-ambient-occlusion).
     #[texture(7)]
-    #[sampler(8)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(8))]
     #[dependency]
     pub occlusion_texture: Option<Handle<Image>>,
 
@@ -468,7 +491,13 @@ pub struct StandardMaterial {
     /// may be desirable to pack the values together and supply the same
     /// texture to both fields.
     #[cfg_attr(feature = "pbr_specular_textures", texture(27))]
-    #[cfg_attr(feature = "pbr_specular_textures", sampler(28))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_specular_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(28)
+    )]
     #[cfg(feature = "pbr_specular_textures")]
     #[dependency]
     pub specular_texture: Option<Handle<Image>>,
@@ -490,7 +519,13 @@ pub struct StandardMaterial {
     /// Like the fixed specular tint value, this texture map isn't supported in
     /// the deferred renderer.
     #[cfg_attr(feature = "pbr_specular_textures", texture(29))]
-    #[cfg_attr(feature = "pbr_specular_textures", sampler(30))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_specular_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(30)
+    )]
     #[cfg(feature = "pbr_specular_textures")]
     #[dependency]
     pub specular_tint_texture: Option<Handle<Image>>,
@@ -516,7 +551,13 @@ pub struct StandardMaterial {
     ///
     /// As this is a non-color map, it must not be loaded as sRGB.
     #[cfg_attr(feature = "pbr_multi_layer_material_textures", texture(21))]
-    #[cfg_attr(feature = "pbr_multi_layer_material_textures", sampler(22))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_multi_layer_material_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(22)
+    )]
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     #[dependency]
     pub clearcoat_texture: Option<Handle<Image>>,
@@ -542,7 +583,13 @@ pub struct StandardMaterial {
     ///
     /// As this is a non-color map, it must not be loaded as sRGB.
     #[cfg_attr(feature = "pbr_multi_layer_material_textures", texture(23))]
-    #[cfg_attr(feature = "pbr_multi_layer_material_textures", sampler(24))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_multi_layer_material_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(24)
+    )]
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     #[dependency]
     pub clearcoat_roughness_texture: Option<Handle<Image>>,
@@ -565,7 +612,13 @@ pub struct StandardMaterial {
     ///
     /// As this is a non-color map, it must not be loaded as sRGB.
     #[cfg_attr(feature = "pbr_multi_layer_material_textures", texture(25))]
-    #[cfg_attr(feature = "pbr_multi_layer_material_textures", sampler(26))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_multi_layer_material_textures",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(26)
+    )]
     #[cfg(feature = "pbr_multi_layer_material_textures")]
     #[dependency]
     pub clearcoat_normal_texture: Option<Handle<Image>>,
@@ -636,7 +689,13 @@ pub struct StandardMaterial {
     /// [`KHR_materials_anisotropy` specification]:
     /// https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_anisotropy/README.md
     #[cfg_attr(feature = "pbr_anisotropy_texture", texture(13))]
-    #[cfg_attr(feature = "pbr_anisotropy_texture", sampler(14))]
+    #[cfg_attr(
+        all(
+            feature = "pbr_anisotropy_texture",
+            not(feature = "pbr_shared_material_samplers")
+        ),
+        sampler(14)
+    )]
     #[cfg(feature = "pbr_anisotropy_texture")]
     #[dependency]
     pub anisotropy_texture: Option<Handle<Image>>,
@@ -741,7 +800,7 @@ pub struct StandardMaterial {
     /// [`parallax_mapping_method`]: StandardMaterial::parallax_mapping_method
     /// [`max_parallax_layer_count`]: StandardMaterial::max_parallax_layer_count
     #[texture(11)]
-    #[sampler(12)]
+    #[cfg_attr(not(feature = "pbr_shared_material_samplers"), sampler(12))]
     #[dependency]
     pub depth_map: Option<Handle<Image>>,
 
@@ -1076,6 +1135,97 @@ pub struct StandardMaterialUniform {
     pub max_relief_mapping_search_steps: u32,
     /// ID for specifying which deferred lighting pass should be used for rendering this material, if any.
     pub deferred_lighting_pass_id: u32,
+    /// Two bits per material texture selecting a canonical shared sampler.
+    #[cfg(feature = "pbr_shared_material_samplers")]
+    pub sampler_modes: u32,
+}
+
+#[cfg(feature = "pbr_shared_material_samplers")]
+const BASE_COLOR_SAMPLER_MODE_SHIFT: u32 = 0;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const EMISSIVE_SAMPLER_MODE_SHIFT: u32 = 2;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const METALLIC_ROUGHNESS_SAMPLER_MODE_SHIFT: u32 = 4;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const OCCLUSION_SAMPLER_MODE_SHIFT: u32 = 6;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const NORMAL_MAP_SAMPLER_MODE_SHIFT: u32 = 8;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const DEPTH_MAP_SAMPLER_MODE_SHIFT: u32 = 10;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const ANISOTROPY_SAMPLER_MODE_SHIFT: u32 = 12;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const SPECULAR_TRANSMISSION_SAMPLER_MODE_SHIFT: u32 = 14;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const THICKNESS_SAMPLER_MODE_SHIFT: u32 = 16;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const DIFFUSE_TRANSMISSION_SAMPLER_MODE_SHIFT: u32 = 18;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const CLEARCOAT_SAMPLER_MODE_SHIFT: u32 = 20;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const CLEARCOAT_ROUGHNESS_SAMPLER_MODE_SHIFT: u32 = 22;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const CLEARCOAT_NORMAL_SAMPLER_MODE_SHIFT: u32 = 24;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const SPECULAR_SAMPLER_MODE_SHIFT: u32 = 26;
+#[cfg(feature = "pbr_shared_material_samplers")]
+const SPECULAR_TINT_SAMPLER_MODE_SHIFT: u32 = 28;
+
+#[cfg(feature = "pbr_shared_material_samplers")]
+fn shared_sampler_mode(image: Option<&Handle<Image>>, images: &RenderAssets<GpuImage>) -> u32 {
+    let Some(descriptor) = image
+        .and_then(|handle| images.get(handle.id()))
+        .map(|image| &image.sampler_descriptor)
+    else {
+        return 0;
+    };
+
+    // The canonical profiles are linear/nearest × clamp/repeat. Mirror,
+    // border, LOD clamps and anisotropy deliberately use their closest one.
+    let repeat = matches!(
+        descriptor.address_mode_u,
+        ImageAddressMode::Repeat | ImageAddressMode::MirrorRepeat
+    ) || matches!(
+        descriptor.address_mode_v,
+        ImageAddressMode::Repeat | ImageAddressMode::MirrorRepeat
+    );
+    let nearest = matches!(descriptor.mag_filter, ImageFilterMode::Nearest)
+        || matches!(descriptor.min_filter, ImageFilterMode::Nearest)
+        || matches!(descriptor.mipmap_filter, ImageFilterMode::Nearest);
+    let mode = (nearest as u32) * 2 + repeat as u32;
+
+    let shared_address_mode = if repeat {
+        ImageAddressMode::Repeat
+    } else {
+        ImageAddressMode::ClampToEdge
+    };
+    let shared_filter = if nearest {
+        ImageFilterMode::Nearest
+    } else {
+        ImageFilterMode::Linear
+    };
+
+    // Only report when canonicalization changes an effective sampler setting.
+    if descriptor.address_mode_u != shared_address_mode
+        || descriptor.address_mode_v != shared_address_mode
+        || descriptor.mag_filter != shared_filter
+        || descriptor.min_filter != shared_filter
+        || descriptor.mipmap_filter != shared_filter
+    {
+        bevy_log::warn!(
+            mode,
+            requested_wrap_u = ?descriptor.address_mode_u,
+            requested_wrap_v = ?descriptor.address_mode_v,
+            shared_wrap = ?shared_address_mode,
+            requested_mag_filter = ?descriptor.mag_filter,
+            requested_min_filter = ?descriptor.min_filter,
+            requested_mipmap_filter = ?descriptor.mipmap_filter,
+            shared_filter = ?shared_filter,
+            "PBR sampler approximated by a shared canonical sampler"
+        );
+    }
+
+    mode
 }
 
 impl AsBindGroupShaderType<StandardMaterialUniform> for StandardMaterial {
@@ -1213,6 +1363,64 @@ impl AsBindGroupShaderType<StandardMaterialUniform> for StandardMaterial {
         // Doing this up front saves having to do this repeatedly in the fragment shader.
         let anisotropy_rotation = Vec2::from_angle(self.anisotropy_rotation);
 
+        #[cfg(feature = "pbr_shared_material_samplers")]
+        let mut sampler_modes = shared_sampler_mode(self.base_color_texture.as_ref(), images)
+            << BASE_COLOR_SAMPLER_MODE_SHIFT
+            | (shared_sampler_mode(self.emissive_texture.as_ref(), images)
+                << EMISSIVE_SAMPLER_MODE_SHIFT)
+            | (shared_sampler_mode(self.metallic_roughness_texture.as_ref(), images)
+                << METALLIC_ROUGHNESS_SAMPLER_MODE_SHIFT)
+            | (shared_sampler_mode(self.occlusion_texture.as_ref(), images)
+                << OCCLUSION_SAMPLER_MODE_SHIFT)
+            | (shared_sampler_mode(self.normal_map_texture.as_ref(), images)
+                << NORMAL_MAP_SAMPLER_MODE_SHIFT)
+            | (shared_sampler_mode(self.depth_map.as_ref(), images)
+                << DEPTH_MAP_SAMPLER_MODE_SHIFT);
+        #[cfg(all(
+            feature = "pbr_shared_material_samplers",
+            feature = "pbr_anisotropy_texture"
+        ))]
+        {
+            sampler_modes |= shared_sampler_mode(self.anisotropy_texture.as_ref(), images)
+                << ANISOTROPY_SAMPLER_MODE_SHIFT;
+        }
+        #[cfg(all(
+            feature = "pbr_shared_material_samplers",
+            feature = "pbr_transmission_textures"
+        ))]
+        {
+            sampler_modes |=
+                shared_sampler_mode(self.specular_transmission_texture.as_ref(), images)
+                    << SPECULAR_TRANSMISSION_SAMPLER_MODE_SHIFT;
+            sampler_modes |= shared_sampler_mode(self.thickness_texture.as_ref(), images)
+                << THICKNESS_SAMPLER_MODE_SHIFT;
+            sampler_modes |=
+                shared_sampler_mode(self.diffuse_transmission_texture.as_ref(), images)
+                    << DIFFUSE_TRANSMISSION_SAMPLER_MODE_SHIFT;
+        }
+        #[cfg(all(
+            feature = "pbr_shared_material_samplers",
+            feature = "pbr_multi_layer_material_textures"
+        ))]
+        {
+            sampler_modes |= shared_sampler_mode(self.clearcoat_texture.as_ref(), images)
+                << CLEARCOAT_SAMPLER_MODE_SHIFT;
+            sampler_modes |= shared_sampler_mode(self.clearcoat_roughness_texture.as_ref(), images)
+                << CLEARCOAT_ROUGHNESS_SAMPLER_MODE_SHIFT;
+            sampler_modes |= shared_sampler_mode(self.clearcoat_normal_texture.as_ref(), images)
+                << CLEARCOAT_NORMAL_SAMPLER_MODE_SHIFT;
+        }
+        #[cfg(all(
+            feature = "pbr_shared_material_samplers",
+            feature = "pbr_specular_textures"
+        ))]
+        {
+            sampler_modes |= shared_sampler_mode(self.specular_texture.as_ref(), images)
+                << SPECULAR_SAMPLER_MODE_SHIFT;
+            sampler_modes |= shared_sampler_mode(self.specular_tint_texture.as_ref(), images)
+                << SPECULAR_TINT_SAMPLER_MODE_SHIFT;
+        }
+
         StandardMaterialUniform {
             base_color: LinearRgba::from(self.base_color).to_vec4(),
             emissive,
@@ -1243,6 +1451,8 @@ impl AsBindGroupShaderType<StandardMaterialUniform> for StandardMaterial {
             max_relief_mapping_search_steps: self.parallax_mapping_method.max_steps(),
             deferred_lighting_pass_id: self.deferred_lighting_pass_id as u32,
             uv_transform: self.uv_transform.into(),
+            #[cfg(feature = "pbr_shared_material_samplers")]
+            sampler_modes,
         }
     }
 }

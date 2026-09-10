@@ -20,6 +20,9 @@ pbr_specular_textures = ["bevy_gltf?/pbr_specular_textures"]
 experimental_pbr_pcss = ["bevy_light/experimental_pbr_pcss"]
 pbr_clustered_decals = []
 pbr_light_textures = []
+# Uses the Web-compatible, canonical PBR sampler layout on every target.
+# Intended for validating the Web fallback on native backends.
+pbr_shared_material_samplers = []
 bluenoise_texture = ["bevy_image/ktx2", "bevy_image/zstd"]
 dfg_lut = ["bevy_image/ktx2", "bevy_image/zstd"]
 area_light_luts = ["bevy_image/ktx2", "bevy_image/zstd"]

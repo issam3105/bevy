@@ -32,7 +32,10 @@ use bevy::{
     prelude::*,
     render::{
         camera::TemporalJitter,
+        renderer::RenderDevice,
+        settings::{WgpuLimits, WgpuSettings},
         view::{ColorGrading, ColorGradingGlobal},
+        RenderApp, RenderPlugin, RenderStartup,
     },
 };
 
@@ -46,7 +49,22 @@ use rand::random;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        // Reproduce WebGPU's per-fragment-stage sampler limit on native backends.
+        .add_plugins(
+            DefaultPlugins.set(RenderPlugin {
+                render_creation: WgpuSettings {
+                    constrained_limits: Some(WgpuLimits {
+                        max_samplers_per_shader_stage: 16,
+                        max_sampled_textures_per_shader_stage: 48,
+                        ..default()
+                    }),
+                    ..default()
+                }
+                .into(),
+                ..default()
+            }),
+        )
+        .add_plugins(PrintDeviceLimitsPlugin)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(PointLightShadowMap { size: 2048 })
         .insert_resource(GlobalAmbientLight {
@@ -56,6 +74,21 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, (example_control_system, flicker_system))
         .run();
+}
+
+struct PrintDeviceLimitsPlugin;
+
+impl Plugin for PrintDeviceLimitsPlugin {
+    fn build(&self, app: &mut App) {
+        let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
+            return;
+        };
+        render_app.add_systems(RenderStartup, print_device_limits);
+    }
+}
+
+fn print_device_limits(render_device: Res<RenderDevice>) {
+    info!("Actual device limits:\n{:#?}", render_device.limits());
 }
 
 /// set up a simple 3D scene

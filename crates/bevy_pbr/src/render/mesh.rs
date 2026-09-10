@@ -192,6 +192,8 @@ impl Plugin for MeshRenderPlugin {
         ));
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
+            #[cfg(feature = "pbr_shared_material_samplers")]
+            render_app.init_gpu_resource::<CommonPbrSamplers>();
             render_app
                 .init_gpu_resource::<MeshCullingDataBuffer>()
                 .init_resource::<RenderMaterialInstances>()
@@ -2814,6 +2816,10 @@ pub fn build_dummy_white_gpu_image(
         texture,
         texture_view,
         sampler,
+        sampler_descriptor: match &image.sampler {
+            ImageSampler::Default => Default::default(),
+            ImageSampler::Descriptor(descriptor) => descriptor.clone(),
+        },
         texture_descriptor: image.texture_descriptor,
         texture_view_descriptor: image.texture_view_descriptor,
         had_data: true,
@@ -3432,6 +3438,9 @@ impl SpecializedMeshPipeline for MeshPipeline {
         }
         if cfg!(feature = "pbr_specular_textures") {
             shader_defs.push("PBR_SPECULAR_TEXTURES_SUPPORTED".into());
+        }
+        if cfg!(feature = "pbr_shared_material_samplers") {
+            shader_defs.push("PBR_SHARED_MATERIAL_SAMPLERS".into());
         }
         if cfg!(feature = "bluenoise_texture") {
             shader_defs.push("BLUE_NOISE_TEXTURE".into());

@@ -13,6 +13,12 @@ import package::{
 
 @if(BINDLESS)
 import package::render::pbr_bindings::material_indices;
+@if(PBR_SHARED_MATERIAL_SAMPLERS)
+import package::render::pbr_material_sampling::{
+    shared_sample_bias,
+    material_sampler_mode,
+    BASE_COLOR_SAMPLER_MODE_SHIFT,
+};
 
 /// Cutoff used for the premultiplied alpha modes BLEND, ADD, and ALPHA_TO_COVERAGE.
 const PREMULTIPLIED_ALPHA_CUTOFF = 0.05;
@@ -74,8 +80,19 @@ fn prepass_sample_color_and_alpha_discard(in: VertexOutput) {
         let texture = pbr_bindings::base_color_texture;
 @if(BINDLESS)
         let sampler_ = bindless_samplers_filtering[material_indices[slot].base_color_sampler];
-@else
+@elif(!PBR_SHARED_MATERIAL_SAMPLERS)
         let sampler_ = pbr_bindings::base_color_sampler;
+@if(PBR_SHARED_MATERIAL_SAMPLERS)
+        output_color = output_color * shared_sample_bias(
+            texture,
+            uv,
+            view.mip_bias,
+            material_sampler_mode(
+                pbr_bindings::material.sampler_modes,
+                BASE_COLOR_SAMPLER_MODE_SHIFT,
+            ),
+        );
+@else
         output_color = output_color * textureSampleBias(
             texture,
             sampler_,

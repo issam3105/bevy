@@ -13,6 +13,8 @@ use bevy_core_pipeline::{
         get_lut_bind_group_layout_entries, get_lut_bindings, Tonemapping, TonemappingLuts,
     },
 };
+#[cfg(feature = "pbr_shared_material_samplers")]
+use bevy_ecs::world::{FromWorld, World};
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -70,6 +72,63 @@ use {crate::MESH_PIPELINE_VIEW_LAYOUT_SAFE_MAX_TEXTURES, bevy_utils::once, traci
 
 pub const TONEMAPPING_LUT_TEXTURE_BINDING_INDEX: u32 = 18;
 pub const TONEMAPPING_LUT_SAMPLER_BINDING_INDEX: u32 = 19;
+
+/// The only filtering samplers used by the core PBR material path on the web.
+///
+/// WebGPU counts sampler *bindings*, so sharing these at the view level saves
+/// one sampler binding for each material texture.
+#[cfg(feature = "pbr_shared_material_samplers")]
+#[derive(Resource)]
+pub struct CommonPbrSamplers {
+    pub linear_clamp: Sampler,
+    pub linear_repeat: Sampler,
+    pub nearest_clamp: Sampler,
+    pub nearest_repeat: Sampler,
+}
+
+#[cfg(feature = "pbr_shared_material_samplers")]
+impl FromWorld for CommonPbrSamplers {
+    fn from_world(world: &mut World) -> Self {
+        let device = world.resource::<RenderDevice>();
+        let make = |label, address_mode, filter| {
+            device.create_sampler(&SamplerDescriptor {
+                label: Some(label),
+                address_mode_u: address_mode,
+                address_mode_v: address_mode,
+                address_mode_w: address_mode,
+                mag_filter: filter,
+                min_filter: filter,
+                mipmap_filter: match filter {
+                    FilterMode::Nearest => MipmapFilterMode::Nearest,
+                    FilterMode::Linear => MipmapFilterMode::Linear,
+                },
+                ..Default::default()
+            })
+        };
+        Self {
+            linear_clamp: make(
+                "pbr_linear_clamp_sampler",
+                AddressMode::ClampToEdge,
+                FilterMode::Linear,
+            ),
+            linear_repeat: make(
+                "pbr_linear_repeat_sampler",
+                AddressMode::Repeat,
+                FilterMode::Linear,
+            ),
+            nearest_clamp: make(
+                "pbr_nearest_clamp_sampler",
+                AddressMode::ClampToEdge,
+                FilterMode::Nearest,
+            ),
+            nearest_repeat: make(
+                "pbr_nearest_repeat_sampler",
+                AddressMode::Repeat,
+                FilterMode::Nearest,
+            ),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct MeshPipelineViewLayout {
@@ -493,6 +552,16 @@ fn layout_entries(
         ));
     }
 
+    #[cfg(feature = "pbr_shared_material_samplers")]
+    {
+        entries = entries.extend_with_indices((
+            (39, sampler(SamplerBindingType::Filtering)),
+            (40, sampler(SamplerBindingType::Filtering)),
+            (41, sampler(SamplerBindingType::Filtering)),
+            (42, sampler(SamplerBindingType::Filtering)),
+        ));
+    }
+
     let mut binding_array_entries = DynamicBindGroupLayoutEntries::new(ShaderStages::FRAGMENT);
     if layout_key.contains(MeshPipelineViewLayoutKey::ENVIRONMENT_MAP) {
         binding_array_entries = binding_array_entries.extend_with_indices((
@@ -637,6 +706,7 @@ pub fn prepare_mesh_view_bind_groups(
         Res<RenderAdapter>,
     ),
     mesh_pipeline: Res<MeshPipeline>,
+    #[cfg(feature = "pbr_shared_material_samplers")] common_pbr_samplers: Res<CommonPbrSamplers>,
     shadow_samplers: Res<ShadowSamplers>,
     (light_meta, global_clusterable_object_meta, fog_meta, view_uniforms): (
         Res<LightMeta>,
@@ -792,6 +862,16 @@ pub fn prepare_mesh_view_bind_groups(
                 (12, light_probes_binding.clone()),
                 (14, visibility_ranges_buffer.as_entire_binding()),
             ));
+
+            #[cfg(feature = "pbr_shared_material_samplers")]
+            {
+                entries = entries.extend_with_indices((
+                    (39, &common_pbr_samplers.linear_clamp),
+                    (40, &common_pbr_samplers.linear_repeat),
+                    (41, &common_pbr_samplers.nearest_clamp),
+                    (42, &common_pbr_samplers.nearest_repeat),
+                ));
+            }
 
             if let Some(view_fog_offset) = view_fog_offset {
                 layout_key |= MeshPipelineViewLayoutKey::DISTANCE_FOG;

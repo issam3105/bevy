@@ -19,6 +19,13 @@ import package::meshlet::visibility_buffer_resolve::resolve_vertex_output;
 
 @if(BINDLESS)
 import package::render::pbr_bindings::material_indices;
+@if(PBR_SHARED_MATERIAL_SAMPLERS)
+import package::render::pbr_material_sampling::{
+    shared_sample_bias,
+    shared_sample_grad,
+    material_sampler_mode,
+    NORMAL_MAP_SAMPLER_MODE_SHIFT,
+};
 
 @if(PREPASS_FRAGMENT)
 @fragment
@@ -102,25 +109,16 @@ fn fragment(
         let texture = pbr_bindings::normal_map_texture;
 @if(BINDLESS)
         let sampler_ = bindless_samplers_filtering[material_indices[slot].normal_map_sampler];
-@else
+        @elif(!PBR_SHARED_MATERIAL_SAMPLERS)
         let sampler_ = pbr_bindings::normal_map_sampler;
-@if(MESHLET_MESH_MATERIAL_PASS)
-        let Nt =
-            textureSampleGrad(
-                texture,
-                sampler_,
-                uv,
-                bias.ddx_uv,
-                bias.ddy_uv,
-            ).rgb;
-@if(!MESHLET_MESH_MATERIAL_PASS)
-        let Nt =
-            textureSampleBias(
-                texture,
-                sampler_,
-                uv,
-                bias.mip_bias,
-            ).rgb;
+@if(MESHLET_MESH_MATERIAL_PASS && PBR_SHARED_MATERIAL_SAMPLERS)
+        let Nt = shared_sample_grad(texture, uv, bias.ddx_uv, bias.ddy_uv, material_sampler_mode(pbr_bindings::material.sampler_modes, NORMAL_MAP_SAMPLER_MODE_SHIFT)).rgb;
+@elif(MESHLET_MESH_MATERIAL_PASS)
+        let Nt = textureSampleGrad(texture, sampler_, uv, bias.ddx_uv, bias.ddy_uv).rgb;
+@elif(PBR_SHARED_MATERIAL_SAMPLERS)
+        let Nt = shared_sample_bias(texture, uv, bias.mip_bias, material_sampler_mode(pbr_bindings::material.sampler_modes, NORMAL_MAP_SAMPLER_MODE_SHIFT)).rgb;
+@else
+        let Nt = textureSampleBias(texture, sampler_, uv, bias.mip_bias).rgb;
         let TBN = pbr_functions::calculate_tbn_mikktspace(normal, in.world_tangent);
 
         normal = pbr_functions::apply_normal_mapping(

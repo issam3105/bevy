@@ -1,12 +1,23 @@
 import bevy_render::bindless::{bindless_samplers_filtering, bindless_textures_2d};
 
 import package::render::{
-    pbr_bindings::{depth_map_texture, depth_map_sampler},
-    mesh_bindings::mesh
+    pbr_bindings,
+    pbr_bindings::depth_map_texture,
+    mesh_bindings::mesh,
+    mesh_view_bindings::view,
 };
+
+@if(!PBR_SHARED_MATERIAL_SAMPLERS)
+import package::render::pbr_bindings::depth_map_sampler;
 
 @if(BINDLESS)
 import package::render::pbr_bindings::material_indices;
+@if(PBR_SHARED_MATERIAL_SAMPLERS)
+import package::render::pbr_material_sampling::{
+    shared_sample_level,
+    material_sampler_mode,
+    DEPTH_MAP_SAMPLER_MODE_SHIFT,
+};
 
 fn sample_depth_map(uv: vec2<f32>, material_bind_group_slot: u32) -> f32 {
     // We use `textureSampleLevel` over `textureSample` because the wgpu DX12
@@ -25,6 +36,16 @@ fn sample_depth_map(uv: vec2<f32>, material_bind_group_slot: u32) -> f32 {
         bindless_samplers_filtering[material_indices[material_bind_group_slot].depth_map_sampler],
         uv,
         0.0
+    ).r;
+    @elif(PBR_SHARED_MATERIAL_SAMPLERS)
+    return shared_sample_level(
+        depth_map_texture,
+        uv,
+        0.0,
+        material_sampler_mode(
+            pbr_bindings::material.sampler_modes,
+            DEPTH_MAP_SAMPLER_MODE_SHIFT,
+        ),
     ).r;
     @else
     return textureSampleLevel(

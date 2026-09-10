@@ -628,6 +628,9 @@ shader_format_spirv = ["bevy_internal/shader_format_spirv"]
 # Enable support for transmission-related textures in the `StandardMaterial`, at the risk of blowing past the global, per-shader texture limit on older/lower-end GPUs
 pbr_transmission_textures = ["bevy_internal/pbr_transmission_textures"]
 
+# Use the Web-compatible shared PBR sampler layout on native backends for validation.
+pbr_shared_material_samplers = ["bevy_internal/pbr_shared_material_samplers"]
+
 # Enable support for Clustered Decals
 pbr_clustered_decals = ["bevy_internal/pbr_clustered_decals"]
 

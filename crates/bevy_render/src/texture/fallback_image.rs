@@ -68,6 +68,7 @@ fn fallback_image_new(
     render_device: &RenderDevice,
     render_queue: &RenderQueue,
     default_sampler: &DefaultImageSampler,
+    default_sampler_descriptor: &DefaultImageSamplerDescriptor,
     format: TextureFormat,
     dimension: TextureViewDimension,
     samples: u32,
@@ -135,6 +136,10 @@ fn fallback_image_new(
         texture,
         texture_view,
         sampler,
+        sampler_descriptor: match image.sampler {
+            ImageSampler::Default => default_sampler_descriptor.0.clone(),
+            ImageSampler::Descriptor(ref descriptor) => descriptor.clone(),
+        },
         texture_descriptor: image.texture_descriptor,
         texture_view_descriptor: image.texture_view_descriptor,
         had_data: true,
@@ -146,11 +151,13 @@ impl FromWorld for FallbackImage {
         let render_device = world.resource::<RenderDevice>();
         let render_queue = world.resource::<RenderQueue>();
         let default_sampler = world.resource::<DefaultImageSampler>();
+        let default_sampler_descriptor = world.resource::<DefaultImageSamplerDescriptor>();
         Self {
             d1: fallback_image_new(
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::D1,
                 1,
@@ -160,6 +167,7 @@ impl FromWorld for FallbackImage {
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::D2,
                 1,
@@ -169,6 +177,7 @@ impl FromWorld for FallbackImage {
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::D2Array,
                 1,
@@ -178,6 +187,7 @@ impl FromWorld for FallbackImage {
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::Cube,
                 1,
@@ -187,6 +197,7 @@ impl FromWorld for FallbackImage {
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::CubeArray,
                 1,
@@ -196,6 +207,7 @@ impl FromWorld for FallbackImage {
                 render_device,
                 render_queue,
                 default_sampler,
+                default_sampler_descriptor,
                 TextureFormat::Rgba8UnormSrgb,
                 TextureViewDimension::D3,
                 1,
@@ -210,10 +222,12 @@ impl FromWorld for FallbackImageZero {
         let render_device = world.resource::<RenderDevice>();
         let render_queue = world.resource::<RenderQueue>();
         let default_sampler = world.resource::<DefaultImageSampler>();
+        let default_sampler_descriptor = world.resource::<DefaultImageSamplerDescriptor>();
         Self(fallback_image_new(
             render_device,
             render_queue,
             default_sampler,
+            default_sampler_descriptor,
             TextureFormat::Rgba8UnormSrgb,
             TextureViewDimension::D2,
             1,
@@ -227,10 +241,12 @@ impl FromWorld for FallbackImageCubemap {
         let render_device = world.resource::<RenderDevice>();
         let render_queue = world.resource::<RenderQueue>();
         let default_sampler = world.resource::<DefaultImageSampler>();
+        let default_sampler_descriptor = world.resource::<DefaultImageSamplerDescriptor>();
         Self(fallback_image_new(
             render_device,
             render_queue,
             default_sampler,
+            default_sampler_descriptor,
             TextureFormat::Rgba8UnormSrgb,
             TextureViewDimension::Cube,
             1,
@@ -253,6 +269,7 @@ pub struct FallbackImageMsaa<'w> {
     render_device: Res<'w, RenderDevice>,
     render_queue: Res<'w, RenderQueue>,
     default_sampler: Res<'w, DefaultImageSampler>,
+    default_sampler_descriptor: Res<'w, DefaultImageSamplerDescriptor>,
 }
 
 impl<'w> FallbackImageMsaa<'w> {
@@ -262,6 +279,7 @@ impl<'w> FallbackImageMsaa<'w> {
                 &self.render_device,
                 &self.render_queue,
                 &self.default_sampler,
+                &self.default_sampler_descriptor,
                 format,
                 TextureViewDimension::D2,
                 sample_count,

@@ -161,6 +161,7 @@ pbr_transmission_textures = [
   "bevy_pbr?/pbr_transmission_textures",
   "bevy_gltf?/pbr_transmission_textures",
 ]
+pbr_shared_material_samplers = ["bevy_pbr?/pbr_shared_material_samplers"]
 
 # Clustered Decal support
 pbr_clustered_decals = ["bevy_pbr?/pbr_clustered_decals"]

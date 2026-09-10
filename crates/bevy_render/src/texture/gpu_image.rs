@@ -1,11 +1,13 @@
 use crate::{
     render_asset::{AssetExtractionError, PrepareAssetError, RenderAsset},
-    render_resource::{DefaultImageSampler, Sampler, Texture, TextureView},
+    render_resource::{
+        DefaultImageSampler, DefaultImageSamplerDescriptor, Sampler, Texture, TextureView,
+    },
     renderer::{RenderDevice, RenderQueue},
 };
 use bevy_asset::{AssetId, RenderAssetUsages};
 use bevy_ecs::system::{lifetimeless::SRes, SystemParamItem};
-use bevy_image::{Image, ImageSampler};
+use bevy_image::{Image, ImageSampler, ImageSamplerDescriptor};
 use bevy_log::warn;
 use bevy_math::{AspectRatio, UVec2};
 use wgpu::{Extent3d, TexelCopyBufferLayout, TextureFormat, TextureUsages};
@@ -18,6 +20,11 @@ pub struct GpuImage {
     pub texture: Texture,
     pub texture_view: TextureView,
     pub sampler: Sampler,
+    /// The descriptor used to create [`Self::sampler`].
+    ///
+    /// Keeping this CPU-side metadata lets render paths select one of a small
+    /// set of canonical samplers without inspecting the GPU sampler.
+    pub sampler_descriptor: ImageSamplerDescriptor,
     pub texture_descriptor: TextureDescriptor<Option<&'static str>, &'static [TextureFormat]>,
     pub texture_view_descriptor: Option<TextureViewDescriptor<Option<&'static str>>>,
     pub had_data: bool,
@@ -29,6 +36,7 @@ impl RenderAsset for GpuImage {
         SRes<RenderDevice>,
         SRes<RenderQueue>,
         SRes<DefaultImageSampler>,
+        SRes<DefaultImageSamplerDescriptor>,
     );
 
     #[inline]
@@ -63,7 +71,7 @@ impl RenderAsset for GpuImage {
     fn prepare_asset(
         image: Self::SourceAsset,
         _: AssetId<Self::SourceAsset>,
-        (render_device, render_queue, default_sampler): &mut SystemParamItem<Self::Param>,
+        (render_device, render_queue, default_sampler, default_sampler_descriptor): &mut SystemParamItem<Self::Param>,
         previous_asset: Option<&Self>,
     ) -> Result<Self, PrepareAssetError<Self::SourceAsset>> {
         let had_data = image.data.is_some();
@@ -162,6 +170,10 @@ impl RenderAsset for GpuImage {
                 .map(|desc| texture.create_view(desc))
                 .unwrap_or_else(|| texture.create_view(&TextureViewDescriptor::default()))
         };
+        let sampler_descriptor = match &image.sampler {
+            ImageSampler::Default => default_sampler_descriptor.0.clone(),
+            ImageSampler::Descriptor(descriptor) => descriptor.clone(),
+        };
         let sampler = match image.sampler {
             ImageSampler::Default => (***default_sampler).clone(),
             ImageSampler::Descriptor(descriptor) => {
@@ -173,6 +185,7 @@ impl RenderAsset for GpuImage {
             texture,
             texture_view,
             sampler,
+            sampler_descriptor,
             texture_descriptor: image.texture_descriptor,
             texture_view_descriptor: image.texture_view_descriptor,
             had_data,
