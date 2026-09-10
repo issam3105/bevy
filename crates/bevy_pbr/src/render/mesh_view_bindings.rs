@@ -73,10 +73,10 @@ use {crate::MESH_PIPELINE_VIEW_LAYOUT_SAFE_MAX_TEXTURES, bevy_utils::once, traci
 pub const TONEMAPPING_LUT_TEXTURE_BINDING_INDEX: u32 = 18;
 pub const TONEMAPPING_LUT_SAMPLER_BINDING_INDEX: u32 = 19;
 
-/// The only filtering samplers used by the core PBR material path on the web.
+/// Canonical filtering samplers used by the shared PBR material path.
 ///
-/// WebGPU counts sampler *bindings*, so sharing these at the view level saves
-/// one sampler binding for each material texture.
+/// Sharing these at the view level reduces the number of sampler bindings used
+/// by each material texture and helps meet per-stage sampler binding limits.
 #[cfg(feature = "pbr_shared_material_samplers")]
 #[derive(Resource)]
 pub struct CommonPbrSamplers {

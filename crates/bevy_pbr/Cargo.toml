@@ -20,8 +20,8 @@ pbr_specular_textures = ["bevy_gltf?/pbr_specular_textures"]
 experimental_pbr_pcss = ["bevy_light/experimental_pbr_pcss"]
 pbr_clustered_decals = []
 pbr_light_textures = []
-# Uses the Web-compatible, canonical PBR sampler layout on every target.
-# Intended for validating the Web fallback on native backends.
+# Uses a canonical shared PBR sampler layout to reduce per-stage sampler bindings.
+# Useful on targets whose sampler binding limits are restrictive.
 pbr_shared_material_samplers = []
 bluenoise_texture = ["bevy_image/ktx2", "bevy_image/zstd"]
 dfg_lut = ["bevy_image/ktx2", "bevy_image/zstd"]
